@@ -1,5 +1,12 @@
-project(FootstepPlanner)
 cmake_minimum_required(VERSION 2.8)
-aux_source_directory(. SRC_LIST)
-add_executable(${PROJECT_NAME} ${SRC_LIST})
+project(FootstepPlanner)
 
+find_package(OpenSceneGraph)
+
+include_directories(${OpenSceneGraph_INCLUDE_DIRS})
+link_libraries(osg osgViewer OpenThreads)
+
+file(GLOB SRC_LIST "src/*.cpp" "include/*.h")
+list(SORT SRC_LIST)
+
+add_executable(${PROJECT_NAME} ${SRC_LIST})
