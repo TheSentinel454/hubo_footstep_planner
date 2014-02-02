@@ -3,6 +3,10 @@ FootstepPlanner/CMakeFiles/*
 
 FootstepPlanner/CMakeCache.txt
 
+FootstepPlanner/cmake_install.cmake.user
+
 FootstepPlanner/FootstepPlanner
 
 FootstepPlanner/Makefile
+
+FootstepPlanner-build/*
