@@ -45,6 +45,13 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include "FootLocation.h"
+#include "Line.h"
+
+using namespace fsp;
+
 void pyramidTest();
+
+void visualizePlan(FootLocation[], FootLocation[], Line[], FootLocation[]);
 
 #endif

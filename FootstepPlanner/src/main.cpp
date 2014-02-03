@@ -59,20 +59,47 @@
 using namespace std;
 using namespace osg;
 using namespace fsp;
+using namespace Eigen;
 
 int main()
 {
-    //pyramidTest();
-    Foot leftFoot(5.0f, 10.0f, "Left");
-    Foot rightFoot(5.0f, 10.0f, "Right");
+    //pyramidTest();x
+    Foot leftFoot(2.0f, 4.0f, "Left");
+    Foot rightFoot(2.0f, 4.0f, "Right");
     Foot feet[2] = {leftFoot, rightFoot};
 
     cout << leftFoot.getName() << ": " << leftFoot.getWidth() << "x" << leftFoot.getLength() << endl;
     cout << rightFoot.getName() << ": " << rightFoot.getWidth() << "x" << rightFoot.getLength() << endl;
 
+    Vector2f currentLeftPos(0.0f, 2.0f);
+    Vector2f currentRightPos(0.0f, 0.0f);
+    FootLocation currentLeftFoot(currentLeftPos, 0.0f, leftFoot);
+    FootLocation currentRightFoot(currentRightPos, 0.0f, rightFoot);
+    FootLocation currentLoc[2] = {currentLeftFoot, currentRightFoot};
+
+    Vector2f goalLeftPos(67.0f, 85.0f);
+    Vector2f goalRightPos(67.0f, 83.0f);
+    FootLocation goalLeftFoot(goalLeftPos, 0.0f, leftFoot);
+    FootLocation goalRightFoot(goalRightPos, 0.0f, rightFoot);
+    FootLocation goalLoc[2] = {goalLeftFoot, goalRightFoot};
+
+
+    visualizePlan(currentLoc, goalLoc, NULL, NULL);//obs, plan);
     return 0;
 }
 
+///
+/// \fn visualizePla
+/// \brief visualizePlan
+/// \param currentLocation
+/// \param goalLocation
+/// \param obstacles
+/// \param plan
+///
+void visualizePlan(FootLocation currentLocation[], FootLocation goalLocation[], Line obstacles[], FootLocation plan[])
+{
+
+}
 
 void pyramidTest()
 {
