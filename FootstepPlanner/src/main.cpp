@@ -98,7 +98,25 @@ int main()
 ///
 void visualizePlan(FootLocation currentLocation[], FootLocation goalLocation[], Line obstacles[], FootLocation plan[])
 {
+    // Initialize the root
+    Group* root = new Group();
 
+    // Initialize colors
+    Vec4 blue = Vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    Vec4 green = Vec4(0.0f, 1.0f, 0.0f, 1.0f);
+    Vec4 red = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+
+    // Add the current position (blue)
+
+    // Add the goal position (green)
+
+    // Add the obstacles (red)
+
+    // Add the steps (Fade from blue to green)
+
+    osgViewer::Viewer viewer;
+    viewer.setSceneData(root);
+    viewer.run();
 }
 
 void pyramidTest()
