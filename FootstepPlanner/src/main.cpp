@@ -53,16 +53,26 @@
 #include <iostream>
 
 #include "../include/main.h"
+#include "../include/Foot.h"
+#include "../include/FootLocation.h"
 
 using namespace std;
 using namespace osg;
+using namespace fsp;
 
 int main()
 {
-    pyramidTest();
+    //pyramidTest();
+    Foot leftFoot(5.0f, 10.0f, "Left");
+    Foot rightFoot(5.0f, 10.0f, "Right");
+    Foot feet[2] = {leftFoot, rightFoot};
+
+    cout << leftFoot.getName() << ": " << leftFoot.getWidth() << "x" << leftFoot.getLength() << endl;
+    cout << rightFoot.getName() << ": " << rightFoot.getWidth() << "x" << rightFoot.getLength() << endl;
 
     return 0;
 }
+
 
 void pyramidTest()
 {

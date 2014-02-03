@@ -4,7 +4,9 @@ project(FootstepPlanner)
 find_package(OpenSceneGraph)
 
 include_directories(${OpenSceneGraph_INCLUDE_DIRS})
-link_libraries(osg osgViewer OpenThreads)
+# Include the Eigen folder
+include_directories(/usr/include/eigen3)
+link_libraries(osg osgViewer OpenThreads fcl boost_system)
 
 file(GLOB SRC_LIST "src/*.cpp" "include/*.h")
 list(SORT SRC_LIST)
