@@ -60,6 +60,10 @@ class FootLocation
 {
     public:
         FootLocation( Eigen::Vector2f, float, fsp::Foot& );
+
+        Eigen::Vector2f getLocation() const;
+        float getTheta() const;
+        Foot getFoot() const;
     protected:
 
     private:

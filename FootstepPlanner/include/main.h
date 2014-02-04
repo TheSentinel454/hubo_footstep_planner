@@ -49,9 +49,10 @@
 #include "Line.h"
 
 using namespace fsp;
+using namespace std;
 
 void pyramidTest();
 
-void visualizePlan(FootLocation[], FootLocation[], Line[], FootLocation[]);
+void visualizePlan(vector<FootLocation>, vector<FootLocation>, vector<Line>, vector<FootLocation>);
 
 #endif

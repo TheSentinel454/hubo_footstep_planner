@@ -63,7 +63,7 @@ using namespace Eigen;
 
 int main()
 {
-    //pyramidTest();x
+    //pyramidTest();
     Foot leftFoot(2.0f, 4.0f, "Left");
     Foot rightFoot(2.0f, 4.0f, "Right");
     Foot feet[2] = {leftFoot, rightFoot};
@@ -71,20 +71,49 @@ int main()
     cout << leftFoot.getName() << ": " << leftFoot.getWidth() << "x" << leftFoot.getLength() << endl;
     cout << rightFoot.getName() << ": " << rightFoot.getWidth() << "x" << rightFoot.getLength() << endl;
 
-    Vector2f currentLeftPos(0.0f, 2.0f);
+    Vector2f currentLeftPos(0.0f, 3.0f);
     Vector2f currentRightPos(0.0f, 0.0f);
     FootLocation currentLeftFoot(currentLeftPos, 0.0f, leftFoot);
     FootLocation currentRightFoot(currentRightPos, 0.0f, rightFoot);
-    FootLocation currentLoc[2] = {currentLeftFoot, currentRightFoot};
+    vector<FootLocation> currentLoc;
+    currentLoc.push_back(currentLeftFoot);
+    currentLoc.push_back(currentRightFoot);
 
-    Vector2f goalLeftPos(67.0f, 85.0f);
-    Vector2f goalRightPos(67.0f, 83.0f);
+    Vector2f goalLeftPos(67.0f, 3.0f);
+    Vector2f goalRightPos(67.0f, 0.0f);
     FootLocation goalLeftFoot(goalLeftPos, 0.0f, leftFoot);
     FootLocation goalRightFoot(goalRightPos, 0.0f, rightFoot);
-    FootLocation goalLoc[2] = {goalLeftFoot, goalRightFoot};
+    vector<FootLocation> goalLoc;
+    goalLoc.push_back(goalLeftFoot);
+    goalLoc.push_back(goalRightFoot);
 
 
-    visualizePlan(currentLoc, goalLoc, NULL, NULL);//obs, plan);
+    vector<FootLocation> plan;
+    plan.push_back(FootLocation(Vector2f(5.0f, 3.0f), 0.0f, leftFoot));
+    plan.push_back(FootLocation(Vector2f(10.0f, 0.0f), 0.0f, rightFoot));
+    plan.push_back(FootLocation(Vector2f(16.0f, 3.0f), 0.0f, leftFoot));
+    plan.push_back(FootLocation(Vector2f(22.0f, 0.0f), 0.0f, rightFoot));
+    plan.push_back(FootLocation(Vector2f(29.0f, 3.0f), 0.0f, leftFoot));
+    plan.push_back(FootLocation(Vector2f(36.0f, 0.0f), 0.0f, rightFoot));
+    plan.push_back(FootLocation(Vector2f(43.0f, 3.0f), 0.0f, leftFoot));
+    plan.push_back(FootLocation(Vector2f(50.0f, 0.0f), 0.0f, rightFoot));
+    plan.push_back(FootLocation(Vector2f(57.0f, 3.0f), 0.0f, leftFoot));
+    plan.push_back(FootLocation(Vector2f(62.0f, 0.0f), 0.0f, rightFoot));
+    plan.push_back(FootLocation(Vector2f(67.0f, 3.0f), 0.0f, leftFoot));
+    plan.push_back(FootLocation(Vector2f(67.0f, 0.0f), 0.0f, rightFoot));
+
+    vector<Line> obs;
+    // First obstacle
+    obs.push_back(Line(Vector2f(-10.0f, 7.0f), Vector2f(55.0f, 18.0f)));
+    obs.push_back(Line(Vector2f(55.0f, 18.0f), Vector2f(0.0f, 23.0f)));
+    obs.push_back(Line(Vector2f(0.0f, 23.0f), Vector2f(-10.0f, 7.0f)));
+    // Second obstacle
+    obs.push_back(Line(Vector2f(20.0f, -7.0f), Vector2f(25.0f, -38.0f)));
+    obs.push_back(Line(Vector2f(25.0f, -38.0f), Vector2f(25.0f, -50.0f)));
+    obs.push_back(Line(Vector2f(25.0f, -50.0f), Vector2f(10.0f, -17.0f)));
+    obs.push_back(Line(Vector2f(10.0f, -17.0f), Vector2f(20.0f, -7.0f)));
+
+    visualizePlan(currentLoc, goalLoc, obs, plan);
     return 0;
 }
 
@@ -96,7 +125,7 @@ int main()
 /// \param obstacles
 /// \param plan
 ///
-void visualizePlan(FootLocation currentLocation[], FootLocation goalLocation[], Line obstacles[], FootLocation plan[])
+void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles, vector<FootLocation> plan)
 {
     // Initialize the root
     Group* root = new Group();
@@ -105,14 +134,195 @@ void visualizePlan(FootLocation currentLocation[], FootLocation goalLocation[], 
     Vec4 blue = Vec4(0.0f, 0.0f, 1.0f, 1.0f);
     Vec4 green = Vec4(0.0f, 1.0f, 0.0f, 1.0f);
     Vec4 red = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    Vec4 yellow = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
+    Vec4 black = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    Vec4 white = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     // Add the current position (blue)
+    Geode* currentPositionGeode = new Geode();
+    Geometry* currentPositionGeometry = new Geometry();
+    Vec4Array* currentPositionColors = new Vec4Array;
+
+    Vec3Array* currentPositionVertices = new Vec3Array;
+    for(int i = 0; i < currentLocation.size(); i++)
+    {
+        FootLocation fl = currentLocation[i];
+        Vector2f loc = fl.getLocation();
+        float xOffset = fl.getFoot().getLength() / 2;
+        float yOffset = fl.getFoot().getWidth() / 2;
+        currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
+        currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
+        currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
+        currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] + yOffset, 0));
+    }
+    // Set the Vertex array
+    currentPositionGeometry->setVertexArray(currentPositionVertices);
+    // Add each of the feet
+    for(int i = 0, j = 0; i < currentLocation.size(); i++, j+=4)
+    {
+        // Add foot
+        DrawElementsUInt* currentFoot = new DrawElementsUInt(PrimitiveSet::QUADS, 0);
+        currentFoot->push_back(j + 0);
+        currentFoot->push_back(j + 1);
+        currentFoot->push_back(j + 2);
+        currentFoot->push_back(j + 3);
+        currentPositionGeometry->addPrimitiveSet(currentFoot);
+        currentPositionColors->push_back(blue);
+    }
+    currentPositionGeometry->setColorArray(currentPositionColors);
+    currentPositionGeometry->setColorBinding(Geometry::BIND_PER_PRIMITIVE_SET);
+
+    currentPositionGeode->addDrawable(currentPositionGeometry);
+    root->addChild(currentPositionGeode);
 
     // Add the goal position (green)
+    Geode* goalPositionGeode = new Geode();
+    Geometry* goalPositionGeometry = new Geometry();
+    Vec4Array* goalPositionColors = new Vec4Array;
+
+    Vec3Array* goalPositionVertices = new Vec3Array;
+    for(int i = 0; i < goalLocation.size(); i++)
+    {
+        FootLocation fl = goalLocation[i];
+        Vector2f loc = fl.getLocation();
+        float xOffset = fl.getFoot().getLength() / 2;
+        float yOffset = fl.getFoot().getWidth() / 2;
+        goalPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
+        goalPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
+        goalPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
+        goalPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] + yOffset, 0));
+    }
+    // Set the Vertex array
+    goalPositionGeometry->setVertexArray(goalPositionVertices);
+    // Add each of the feet
+    for(int i = 0, j = 0; i < goalLocation.size(); i++, j+=4)
+    {
+        // Add foot
+        DrawElementsUInt* goalFoot = new DrawElementsUInt(PrimitiveSet::QUADS, 0);
+        goalFoot->push_back(j + 0);
+        goalFoot->push_back(j + 1);
+        goalFoot->push_back(j + 2);
+        goalFoot->push_back(j + 3);
+        goalPositionGeometry->addPrimitiveSet(goalFoot);
+        goalPositionColors->push_back(green);
+    }
+    goalPositionGeometry->setColorArray(goalPositionColors);
+    goalPositionGeometry->setColorBinding(Geometry::BIND_PER_PRIMITIVE_SET);
+
+    goalPositionGeode->addDrawable(goalPositionGeometry);
+    root->addChild(goalPositionGeode);
 
     // Add the obstacles (red)
+    Geode* obstacleGeode = new Geode();
+    Geometry* obstacleGeometry = new Geometry();
+    Vec4Array* obstacleColors = new Vec4Array;
+    obstacleColors->push_back(red);
 
-    // Add the steps (Fade from blue to green)
+    Vec3Array* obstacleVertices = new Vec3Array;
+    for(int i = 0; i < obstacles.size(); i++)
+    {
+        Line line = obstacles[i];
+        Vector2f start = line.getStart();
+        Vector2f end = line.getEnd();
+        obstacleVertices->push_back(Vec3(start[0], start[1], 0));
+        obstacleVertices->push_back(Vec3(end[0], end[1], 0));
+    }
+    /*
+    for(int i = 0; i < obstacles.size(); i++)
+    {
+        FootLocation fl = plan[i];
+        Vector2f loc = fl.getLocation();
+        float xOffset = fl.getFoot().getLength() / 2;
+        float yOffset = fl.getFoot().getWidth() / 2;
+        planPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
+        planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
+        planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
+        planPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] + yOffset, 0));
+    }
+    // Set the Vertex array
+    obstacleGeometry->setVertexArray(planPositionVertices);
+    // Add each of the lines
+    DrawElementsUInt* obstacle = new DrawElementsUInt(PrimitiveSet::LINE_LOOP, 0);
+    for(int i = 0; i < obstacles.size(); i++)
+    {
+        // Add line
+        obstacle->push_back(i);
+    }
+    obstacleGeometry->addPrimitiveSet(obstacle);
+    */
+    // Set the Vertex array
+    obstacleGeometry->setVertexArray(obstacleVertices);
+    obstacleGeometry->setColorArray(obstacleColors);
+    obstacleGeometry->setColorBinding(Geometry::BIND_OVERALL);
+
+    obstacleGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,obstacleVertices->size()));
+    obstacleGeode->addDrawable(obstacleGeometry);
+    root->addChild(obstacleGeode);
+
+
+    // Add the steps (yellow)
+    Geode* planPositionGeode = new Geode();
+    Geometry* planPositionGeometry = new Geometry();
+    Vec4Array* planPositionColors = new Vec4Array;
+
+    Vec3Array* planPositionVertices = new Vec3Array;
+    for(int i = 0; i < plan.size(); i++)
+    {
+        FootLocation fl = plan[i];
+        Vector2f loc = fl.getLocation();
+        float xOffset = fl.getFoot().getLength() / 2;
+        float yOffset = fl.getFoot().getWidth() / 2;
+        planPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
+        planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
+        planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
+        planPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] + yOffset, 0));
+    }
+    // Set the Vertex array
+    planPositionGeometry->setVertexArray(planPositionVertices);
+    // Add each of the feet
+    for(int i = 0, j = 0; i < plan.size(); i++, j+=4)
+    {
+        // Add foot
+        DrawElementsUInt* currentFoot = new DrawElementsUInt(PrimitiveSet::QUADS, 0);
+        currentFoot->push_back(j + 0);
+        currentFoot->push_back(j + 1);
+        currentFoot->push_back(j + 2);
+        currentFoot->push_back(j + 3);
+        planPositionGeometry->addPrimitiveSet(currentFoot);
+        planPositionColors->push_back(yellow);
+    }
+    planPositionGeometry->setColorArray(planPositionColors);
+    planPositionGeometry->setColorBinding(Geometry::BIND_PER_PRIMITIVE_SET);
+
+    planPositionGeode->addDrawable(planPositionGeometry);
+    root->addChild(planPositionGeode);
+
+    // Add the plan outline (black)
+    Geode* planOutlineGeode = new Geode();
+    Geometry* planOutlineGeometry = new Geometry();
+    Vec4Array* planOutlineColors = new Vec4Array;
+    planOutlineColors->push_back(black);
+
+    // Add the points for the lines
+    Vec3Array* planOutlineVertices = new Vec3Array;
+    planOutlineVertices->push_back(Vec3(currentLocation[0].getLocation()[0], currentLocation[0].getLocation()[1], 0));
+    for(int i = 0; i < plan.size(); i++)
+    {
+        FootLocation fl = plan[i];
+        Vector2f loc = fl.getLocation();
+        planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
+        planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
+    }
+    // Set the Vertex array
+    planOutlineGeometry->setVertexArray(planOutlineVertices);
+
+    // Set the color
+    planOutlineGeometry->setColorArray(planOutlineColors);
+    planOutlineGeometry->setColorBinding(Geometry::BIND_OVERALL);
+    // Add the primitive set
+    planOutlineGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,planOutlineVertices->size()));
+    planOutlineGeode->addDrawable(planOutlineGeometry);
+    root->addChild(planOutlineGeode);
 
     osgViewer::Viewer viewer;
     viewer.setSceneData(root);

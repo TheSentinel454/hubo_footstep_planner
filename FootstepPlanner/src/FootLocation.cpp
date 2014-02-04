@@ -52,3 +52,7 @@ FootLocation::FootLocation(Eigen::Vector2f location, float theta, Foot& foot)
     m_Theta = theta;
     m_Foot = foot;
 }
+
+Eigen::Vector2f FootLocation::getLocation() const { return m_Location; }
+float FootLocation::getTheta() const { return m_Theta; }
+Foot FootLocation::getFoot() const { return m_Foot; }
