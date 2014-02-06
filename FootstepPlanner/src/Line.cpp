@@ -42,7 +42,7 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../include/Line.h"
+#include "Line.h"
 
 using namespace fsp;
 

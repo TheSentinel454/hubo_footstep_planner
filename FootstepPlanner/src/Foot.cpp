@@ -42,7 +42,7 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../include/Foot.h"
+#include "Foot.h"
 
 using namespace fsp;
 
