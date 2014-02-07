@@ -113,10 +113,157 @@ int main()
     obs.push_back(Line(Vector2f(25.0f, -50.0f), Vector2f(10.0f, -17.0f)));
     obs.push_back(Line(Vector2f(10.0f, -17.0f), Vector2f(20.0f, -7.0f)));
 
+    //visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
     visualizePlan(currentLoc, goalLoc, obs, plan);
     return 0;
 }
 
+/*
+ * Function to get the transform for each of the foot. 
+ * Input Params : 
+ * Vector<FootLocation> :  To get the location/orientation of the transform to be generated. 
+ * Vec4 Color : To signify the color of the transform to be generated. 
+ * Output Values :
+ * To throw the output transform which would be added to the root. 
+ */
+osg::PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 color) 
+{
+    //Create the geode, and set the location values according to the given location. 
+    Geode* currentPositionGeode = new Geode();
+    Geometry* currentPositionGeometry = new Geometry();
+    Vec4Array* currentPositionColors = new Vec4Array;
+    Vec3Array* currentPositionVertices = new Vec3Array;
+    
+    Vector2f loc = location.getLocation();
+    float xOffset = location.getFoot().getLength() / 2;
+    float yOffset = location.getFoot().getWidth() / 2;
+		float theta = location.getTheta();
+    currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
+    currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
+    currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
+    currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] + yOffset, 0));
+    
+		// Set the Vertex array
+    currentPositionGeometry->setVertexArray(currentPositionVertices);
+		// Add foot
+		DrawElementsUInt* currentFoot = new DrawElementsUInt(PrimitiveSet::QUADS, 0);
+		currentFoot->push_back(0);
+		currentFoot->push_back(1);
+		currentFoot->push_back(2);
+		currentFoot->push_back(3);
+		currentPositionGeometry->addPrimitiveSet(currentFoot);
+		currentPositionColors->push_back(color);
+
+    currentPositionGeometry->setColorArray(currentPositionColors);
+    currentPositionGeometry->setColorBinding(Geometry::BIND_PER_PRIMITIVE_SET);
+    currentPositionGeode->addDrawable(currentPositionGeometry);
+
+		//Create the transform, and set the rotation for the given foot location.
+    osg::PositionAttitudeTransform* footTransform = new osg::PositionAttitudeTransform();
+
+		footTransform->addChild(currentPositionGeode);
+ 
+    osg::Vec3 footPosition(loc[0], loc[1], 0);
+    footTransform->setPosition(footPosition);
+    footTransform->setAttitude(osg::Quat(osg::DegreesToRadians(theta), osg::Vec3(0, 0, 1)));
+
+		return footTransform;
+}
+ 
+///
+/// \fn visualizePla
+/// \brief visualizePlan
+/// \param currentLocation
+/// \param goalLocation
+/// \param obstacles
+/// \param plan
+///
+void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles, vector<FootLocation> plan)
+{
+    // Initialize the root
+    Group* root = new Group();
+
+    // Initialize colors
+    Vec4 blue = Vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    Vec4 green = Vec4(0.0f, 1.0f, 0.0f, 1.0f);
+    Vec4 red = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    Vec4 yellow = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
+    Vec4 black = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    Vec4 white = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+		// Add the current position(blue). 
+		for(int i = 0; i < currentLocation.size();i++) 
+		{
+				root->addChild(getFootTransform(currentLocation[i], blue));
+		}
+
+    // Add the goal position (green)
+		for(int i = 0; i < goalLocation.size();i++) 
+		{
+				root->addChild(getFootTransform(goalLocation[i], green));
+		}
+
+    // Add the obstacles (red)
+    Geode* obstacleGeode = new Geode();
+    Geometry* obstacleGeometry = new Geometry();
+    Vec4Array* obstacleColors = new Vec4Array;
+    obstacleColors->push_back(red);
+
+    Vec3Array* obstacleVertices = new Vec3Array;
+    for(int i = 0; i < obstacles.size(); i++)
+    {
+        Line line = obstacles[i];
+        Vector2f start = line.getStart();
+        Vector2f end = line.getEnd();
+        obstacleVertices->push_back(Vec3(start[0], start[1], 0));
+        obstacleVertices->push_back(Vec3(end[0], end[1], 0));
+    }
+    // Set the Vertex array
+    obstacleGeometry->setVertexArray(obstacleVertices);
+    obstacleGeometry->setColorArray(obstacleColors);
+    obstacleGeometry->setColorBinding(Geometry::BIND_OVERALL);
+
+    obstacleGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,obstacleVertices->size()));
+    obstacleGeode->addDrawable(obstacleGeometry);
+    root->addChild(obstacleGeode);
+
+    // Add the steps (yellow)
+    for(int i = 0; i < plan.size(); i++)
+    {
+				root->addChild(getFootTransform(plan[i], yellow));
+    }
+
+    // Add the plan outline (black)
+    Geode* planOutlineGeode = new Geode();
+    Geometry* planOutlineGeometry = new Geometry();
+    Vec4Array* planOutlineColors = new Vec4Array;
+    planOutlineColors->push_back(black);
+
+    // Add the points for the lines
+    Vec3Array* planOutlineVertices = new Vec3Array;
+    planOutlineVertices->push_back(Vec3(currentLocation[0].getLocation()[0], currentLocation[0].getLocation()[1], 0));
+    for(int i = 0; i < plan.size(); i++)
+    {
+        FootLocation fl = plan[i];
+        Vector2f loc = fl.getLocation();
+        planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
+        planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
+    }
+    // Set the Vertex array
+    planOutlineGeometry->setVertexArray(planOutlineVertices);
+
+    // Set the color
+    planOutlineGeometry->setColorArray(planOutlineColors);
+    planOutlineGeometry->setColorBinding(Geometry::BIND_OVERALL);
+    // Add the primitive set
+    planOutlineGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,planOutlineVertices->size()));
+    planOutlineGeode->addDrawable(planOutlineGeometry);
+    root->addChild(planOutlineGeode);
+
+    osgViewer::Viewer viewer;
+    viewer.setSceneData(root);
+    viewer.run();
+}
 ///
 /// \fn visualizePla
 /// \brief visualizePlan

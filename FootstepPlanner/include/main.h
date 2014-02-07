@@ -54,5 +54,6 @@ using namespace std;
 void pyramidTest();
 
 void visualizePlan(vector<FootLocation>, vector<FootLocation>, vector<Line>, vector<FootLocation>);
+void visualizePlanUsingTransform(vector<FootLocation>, vector<FootLocation>, vector<Line>, vector<FootLocation>);
 
 #endif
