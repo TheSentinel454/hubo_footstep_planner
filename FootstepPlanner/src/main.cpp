@@ -52,9 +52,10 @@
 
 #include <iostream>
 
-#include "../include/main.h"
-#include "../include/Foot.h"
-#include "../include/FootLocation.h"
+#include "main.h"
+#include "Foot.h"
+#include "FootLocation.h"
+#include "FootstepPlanner.h"
 
 using namespace std;
 using namespace osg;
@@ -64,43 +65,39 @@ using namespace Eigen;
 int main()
 {
     //pyramidTest();
-    Foot leftFoot(2.0f, 4.0f, "Left");
-    Foot rightFoot(2.0f, 4.0f, "Right");
-    Foot feet[2] = {leftFoot, rightFoot};
-
-    cout << leftFoot.getName() << ": " << leftFoot.getWidth() << "x" << leftFoot.getLength() << endl;
-    cout << rightFoot.getName() << ": " << rightFoot.getWidth() << "x" << rightFoot.getLength() << endl;
+    vector<Foot> feet;
+    feet.push_back(Foot(2.0f, 4.0f, "Left"));
+    feet.push_back(Foot(2.0f, 4.0f, "Right"));
 
     Vector2f currentLeftPos(0.0f, 3.0f);
     Vector2f currentRightPos(0.0f, 0.0f);
-    FootLocation currentLeftFoot(currentLeftPos, 0.0f, leftFoot);
-    FootLocation currentRightFoot(currentRightPos, 0.0f, rightFoot);
+    FootLocation currentLeftFoot(currentLeftPos, 0.0f, feet[0]);
+    FootLocation currentRightFoot(currentRightPos, 0.0f, feet[1]);
     vector<FootLocation> currentLoc;
     currentLoc.push_back(currentLeftFoot);
     currentLoc.push_back(currentRightFoot);
 
     Vector2f goalLeftPos(67.0f, 3.0f);
     Vector2f goalRightPos(67.0f, 0.0f);
-    FootLocation goalLeftFoot(goalLeftPos, 0.0f, leftFoot);
-    FootLocation goalRightFoot(goalRightPos, 0.0f, rightFoot);
+    FootLocation goalLeftFoot(goalLeftPos, 0.0f, feet[0]);
+    FootLocation goalRightFoot(goalRightPos, 0.0f, feet[1]);
     vector<FootLocation> goalLoc;
     goalLoc.push_back(goalLeftFoot);
     goalLoc.push_back(goalRightFoot);
 
-
     vector<FootLocation> plan;
-    plan.push_back(FootLocation(Vector2f(5.0f, 3.0f), 0.0f, leftFoot));
-    plan.push_back(FootLocation(Vector2f(10.0f, 0.0f), 0.0f, rightFoot));
-    plan.push_back(FootLocation(Vector2f(16.0f, 3.0f), 0.0f, leftFoot));
-    plan.push_back(FootLocation(Vector2f(22.0f, 0.0f), 0.0f, rightFoot));
-    plan.push_back(FootLocation(Vector2f(29.0f, 3.0f), 0.0f, leftFoot));
-    plan.push_back(FootLocation(Vector2f(36.0f, 0.0f), 0.0f, rightFoot));
-    plan.push_back(FootLocation(Vector2f(43.0f, 3.0f), 0.0f, leftFoot));
-    plan.push_back(FootLocation(Vector2f(50.0f, 0.0f), 0.0f, rightFoot));
-    plan.push_back(FootLocation(Vector2f(57.0f, 3.0f), 0.0f, leftFoot));
-    plan.push_back(FootLocation(Vector2f(62.0f, 0.0f), 0.0f, rightFoot));
-    plan.push_back(FootLocation(Vector2f(67.0f, 3.0f), 0.0f, leftFoot));
-    plan.push_back(FootLocation(Vector2f(67.0f, 0.0f), 0.0f, rightFoot));
+    plan.push_back(FootLocation(Vector2f(5.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(10.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(16.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(22.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(29.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(36.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(43.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(50.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(57.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(62.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(67.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(67.0f, 0.0f), 0.0f, feet[1]));
 
     vector<Line> obs;
     // First obstacle
@@ -113,6 +110,8 @@ int main()
     obs.push_back(Line(Vector2f(25.0f, -50.0f), Vector2f(10.0f, -17.0f)));
     obs.push_back(Line(Vector2f(10.0f, -17.0f), Vector2f(20.0f, -7.0f)));
 
+    FootstepPlanner planner;
+    vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, feet, currentLoc, goalLoc, obs);
     //visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
     visualizePlan(currentLoc, goalLoc, obs, plan);
     return 0;
@@ -265,7 +264,7 @@ void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<Fo
     viewer.run();
 }
 ///
-/// \fn visualizePla
+/// \fn visualizePlan
 /// \brief visualizePlan
 /// \param currentLocation
 /// \param goalLocation

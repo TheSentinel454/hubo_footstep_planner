@@ -10,3 +10,5 @@ FootstepPlanner/FootstepPlanner
 FootstepPlanner/Makefile
 
 FootstepPlanner-build/*
+
+FootstepPlanner/cmake_install.cmake

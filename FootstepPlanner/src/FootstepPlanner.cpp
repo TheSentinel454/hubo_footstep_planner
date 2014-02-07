@@ -42,36 +42,16 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FOOTLOCATION_H
-#define FOOTLOCATION_H
+#include "FootstepPlanner.h"
 
-#include "Foot.h"
-#include <eigen3/Eigen/Core>
+using namespace fsp;
+using namespace std;
 
-namespace fsp {
+FootstepPlanner::FootstepPlanner(){}
 
-/*!
-  * \class FootLocation
-  * \brief A FootLocation keeps track of the foot location, angle, and a reference to a foot.
-  *
-  *
-  */
-class FootLocation
+vector<FootLocation> generatePlan(int plannerType, vector<Foot> feet, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
-    public:
-        FootLocation( Eigen::Vector2f, float, fsp::Foot& );
+    vector<FootLocation> plan;
 
-        Eigen::Vector2f getLocation() const;
-        float getTheta() const;
-        fsp::Foot getFoot() const;
-    protected:
-
-    private:
-        Eigen::Vector2f m_Location;
-        float m_Theta;
-        fsp::Foot m_Foot;
-    };
-} // namespace fsp
-
-
-#endif
+    return plan;
+}
