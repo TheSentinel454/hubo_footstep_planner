@@ -53,8 +53,6 @@
 #include <iostream>
 
 #include "main.h"
-#include "Foot.h"
-#include "FootLocation.h"
 #include "FootstepPlanner.h"
 
 using namespace std;

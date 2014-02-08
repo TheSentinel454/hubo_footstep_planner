@@ -47,6 +47,7 @@
 
 #include "FootLocation.h"
 #include "Line.h"
+#include "Foot.h"
 
 using namespace fsp;
 using namespace std;

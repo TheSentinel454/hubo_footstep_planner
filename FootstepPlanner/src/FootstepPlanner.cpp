@@ -49,7 +49,7 @@ using namespace std;
 
 FootstepPlanner::FootstepPlanner(){}
 
-vector<FootLocation> generatePlan(int plannerType, vector<Foot> feet, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
+vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<Foot> feet, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
     vector<FootLocation> plan;
 

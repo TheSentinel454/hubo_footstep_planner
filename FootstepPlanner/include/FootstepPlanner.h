@@ -55,19 +55,19 @@ namespace fsp {
 ///
 /// \brief PLANNER_TYPE_RRT
 ///
-int PLANNER_TYPE_RRT = 0;
+const int PLANNER_TYPE_RRT = 0;
 ///
 /// \brief PLANNER_TYPE_A_STAR
 ///
-int PLANNER_TYPE_A_STAR = 1;
+const int PLANNER_TYPE_A_STAR = 1;
 ///
 /// \brief PLANNER_TYPE_R_STAR
 ///
-int PLANNER_TYPE_R_STAR = 2;
+const int PLANNER_TYPE_R_STAR = 2;
 ///
 /// \brief PLANNER_TYPE_ARA_STAR
 ///
-int PLANNER_TYPE_ARA_STAR = 3;
+const int PLANNER_TYPE_ARA_STAR = 3;
 
 /*!
   * \class Footstep Planner
@@ -80,13 +80,14 @@ class FootstepPlanner
     public:
         FootstepPlanner();
 
-        std::vector<FootLocation> generatePlan(int, std::vector<Foot>, std::vector<FootLocation>, std::vector<FootLocation>, std::vector<Line>);
+        std::vector<FootLocation> generatePlan(int plannerType, std::vector<Foot> feet, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
 
     protected:
 
     private:
 
-    };
+};
+
 } // namespace fsp
 
 #endif
