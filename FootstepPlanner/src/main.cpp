@@ -62,35 +62,37 @@ using namespace Eigen;
 
 int main()
 {
+    // Initialize random seed
+    srand(time(NULL));
     //pyramidTest();
     vector<Foot> feet;
     feet.push_back(Foot(2.0f, 4.0f, "Left"));
     feet.push_back(Foot(2.0f, 4.0f, "Right"));
 
     vector<FootLocation> currentLoc;
-    currentLoc.push_back(FootLocation(Vector2f(0.0f, 3.0f), 0.0f, feet[0]));
-    currentLoc.push_back(FootLocation(Vector2f(0.0f, 3.0f), 0.0f, feet[1]));
+    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, feet[0]));
+    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, feet[1]));
 
     vector<FootLocation> goalLoc;
-    goalLoc.push_back(FootLocation(Vector2f(67.0f, 3.0f), 0.0f, feet[0]));
-    goalLoc.push_back(FootLocation(Vector2f(67.0f, 0.0f), 0.0f, feet[1]));
+    goalLoc.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, feet[0]));
+    goalLoc.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, feet[1]));
 
     vector<Line> obs;
     // First obstacle
-    obs.push_back(Line(Vector2f(-10.0f, 7.0f), Vector2f(55.0f, 18.0f)));
-    obs.push_back(Line(Vector2f(55.0f, 18.0f), Vector2f(0.0f, 23.0f)));
-    obs.push_back(Line(Vector2f(0.0f, 23.0f), Vector2f(-10.0f, 7.0f)));
+    obs.push_back(Line(Vector2d(-10.0d, 7.0d), Vector2d(55.0d, 18.0d)));
+    obs.push_back(Line(Vector2d(55.0d, 18.0d), Vector2d(0.0d, 23.0d)));
+    obs.push_back(Line(Vector2d(0.0d, 23.0d), Vector2d(-10.0d, 7.0d)));
     // Second obstacle
-    obs.push_back(Line(Vector2f(20.0f, -7.0f), Vector2f(25.0f, -38.0f)));
-    obs.push_back(Line(Vector2f(25.0f, -38.0f), Vector2f(25.0f, -50.0f)));
-    obs.push_back(Line(Vector2f(25.0f, -50.0f), Vector2f(10.0f, -17.0f)));
-    obs.push_back(Line(Vector2f(10.0f, -17.0f), Vector2f(20.0f, -7.0f)));
+    obs.push_back(Line(Vector2d(20.0d -7.0d), Vector2d(25.0d, -38.0d)));
+    obs.push_back(Line(Vector2d(25.0d, -38.0d), Vector2d(25.0d, -50.0d)));
+    obs.push_back(Line(Vector2d(25.0d, -50.0d), Vector2d(10.0d, -17.0d)));
+    obs.push_back(Line(Vector2d(10.0d, -17.0d), Vector2d(20.0d, -7.0d)));
 
     FootstepPlanner planner;
     vector<FootLocation> plan = planner.getStaticPlan(feet);
     vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, feet, currentLoc, goalLoc, obs);
-    visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
-    //visualizePlan(currentLoc, goalLoc, obs, plan);
+    //visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
+    visualizePlan(currentLoc, goalLoc, obs, plan);
     return 0;
 }
 
@@ -110,9 +112,9 @@ osg::PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 col
     Vec4Array* currentPositionColors = new Vec4Array;
     Vec3Array* currentPositionVertices = new Vec3Array;
     
-    Vector2f loc = location.getLocation();
-    float xOffset = location.getFoot().getLength() / 2;
-    float yOffset = location.getFoot().getWidth() / 2;
+    Vector2d loc = location.getLocation();
+    double xOffset = location.getFoot().getLength() / 2;
+    double yOffset = location.getFoot().getWidth() / 2;
 		float theta = location.getTheta();
     currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
     currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
@@ -147,7 +149,7 @@ osg::PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 col
 }
  
 ///
-/// \fn visualizePla
+/// \fn visualizePlan
 /// \brief visualizePlan
 /// \param currentLocation
 /// \param goalLocation
@@ -189,8 +191,8 @@ void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<Fo
     for(int i = 0; i < obstacles.size(); i++)
     {
         Line line = obstacles[i];
-        Vector2f start = line.getStart();
-        Vector2f end = line.getEnd();
+        Vector2d start = line.getStart();
+        Vector2d end = line.getEnd();
         obstacleVertices->push_back(Vec3(start[0], start[1], 0));
         obstacleVertices->push_back(Vec3(end[0], end[1], 0));
     }
@@ -221,7 +223,7 @@ void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<Fo
     for(int i = 0; i < plan.size(); i++)
     {
         FootLocation fl = plan[i];
-        Vector2f loc = fl.getLocation();
+        Vector2d loc = fl.getLocation();
         planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
         planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
     }
@@ -270,9 +272,9 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     for(int i = 0; i < currentLocation.size(); i++)
     {
         FootLocation fl = currentLocation[i];
-        Vector2f loc = fl.getLocation();
-        float xOffset = fl.getFoot().getLength() / 2;
-        float yOffset = fl.getFoot().getWidth() / 2;
+        Vector2d loc = fl.getLocation();
+        double xOffset = fl.getFoot().getLength() / 2;
+        double yOffset = fl.getFoot().getWidth() / 2;
         currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
         currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
         currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
@@ -307,9 +309,9 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     for(int i = 0; i < goalLocation.size(); i++)
     {
         FootLocation fl = goalLocation[i];
-        Vector2f loc = fl.getLocation();
-        float xOffset = fl.getFoot().getLength() / 2;
-        float yOffset = fl.getFoot().getWidth() / 2;
+        Vector2d loc = fl.getLocation();
+        double xOffset = fl.getFoot().getLength() / 2;
+        double yOffset = fl.getFoot().getWidth() / 2;
         goalPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
         goalPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
         goalPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
@@ -345,8 +347,8 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     for(int i = 0; i < obstacles.size(); i++)
     {
         Line line = obstacles[i];
-        Vector2f start = line.getStart();
-        Vector2f end = line.getEnd();
+        Vector2d start = line.getStart();
+        Vector2d end = line.getEnd();
         obstacleVertices->push_back(Vec3(start[0], start[1], 0));
         obstacleVertices->push_back(Vec3(end[0], end[1], 0));
     }
@@ -392,9 +394,9 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     for(int i = 0; i < plan.size(); i++)
     {
         FootLocation fl = plan[i];
-        Vector2f loc = fl.getLocation();
-        float xOffset = fl.getFoot().getLength() / 2;
-        float yOffset = fl.getFoot().getWidth() / 2;
+        Vector2d loc = fl.getLocation();
+        double xOffset = fl.getFoot().getLength() / 2;
+        double yOffset = fl.getFoot().getWidth() / 2;
         planPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
         planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
         planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
@@ -432,7 +434,7 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     for(int i = 0; i < plan.size(); i++)
     {
         FootLocation fl = plan[i];
-        Vector2f loc = fl.getLocation();
+        Vector2d loc = fl.getLocation();
         planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
         planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
     }

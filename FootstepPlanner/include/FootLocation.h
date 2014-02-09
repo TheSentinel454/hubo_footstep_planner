@@ -59,17 +59,17 @@ namespace fsp {
 class FootLocation
 {
     public:
-        FootLocation( Eigen::Vector2f, float, fsp::Foot& );
+        FootLocation( Eigen::Vector2d location, float theta, fsp::Foot& foot);
 
-        Eigen::Vector2f getLocation() const;
+        Eigen::Vector2d getLocation() const;
         float getTheta() const;
         fsp::Foot getFoot() const;
     protected:
 
     private:
-        Eigen::Vector2f m_Location;
-        float m_Theta;
-        fsp::Foot m_Foot;
+        Eigen::Vector2d _Location;
+        float _Theta;
+        fsp::Foot _Foot;
     };
 } // namespace fsp
 

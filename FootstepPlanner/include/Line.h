@@ -58,16 +58,16 @@ namespace fsp {
 class Line
 {
     public:
-        Line(Eigen::Vector2f, Eigen::Vector2f );
+        Line(Eigen::Vector2d start, Eigen::Vector2d end);
 
-        Eigen::Vector2f getStart() const;
-        Eigen::Vector2f getEnd() const;
+        Eigen::Vector2d getStart() const;
+        Eigen::Vector2d getEnd() const;
 
     protected:
 
     private:
-        Eigen::Vector2f m_Start;
-        Eigen::Vector2f m_End;
+        Eigen::Vector2d _Start;
+        Eigen::Vector2d _End;
     };
 } // namespace fsp
 

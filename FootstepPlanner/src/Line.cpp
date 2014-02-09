@@ -46,11 +46,11 @@
 
 using namespace fsp;
 
-Line::Line(Eigen::Vector2f start, Eigen::Vector2f end)
+Line::Line(Eigen::Vector2d start, Eigen::Vector2d end)
 {
-    m_Start = start;
-    m_End = end;
+    _Start = start;
+    _End = end;
 }
 
-Eigen::Vector2f Line::getStart() const { return m_Start; }
-Eigen::Vector2f Line::getEnd() const { return m_End; }
+Eigen::Vector2d Line::getStart() const { return _Start; }
+Eigen::Vector2d Line::getEnd() const { return _End; }

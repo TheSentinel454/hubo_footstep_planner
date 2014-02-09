@@ -47,31 +47,138 @@
 using namespace fsp;
 using namespace std;
 using namespace Eigen;
+using namespace flann;
 
+///
+/// \brief FootstepPlanner::FootstepPlanner
+///
 FootstepPlanner::FootstepPlanner(){}
 
+///
+/// \brief FootstepPlanner::generatePlan
+/// \param plannerType
+/// \param feet
+/// \param currentLocation
+/// \param goalLocation
+/// \param obstacles
+/// \return
+///
 vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<Foot> feet, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
+    // Take a starting time stamp
+    clock_t tStart = clock();
+    // Initialize plan
     vector<FootLocation> plan;
+    switch(plannerType)
+    {
+        case PLANNER_TYPE_RRT:
+        default:
+            plan = runRRTPlanner(feet, currentLocation, goalLocation, obstacles);
+            break;
+    }
+    // Take the ending time stamp
+    clock_t tEnd = clock();
+
+    // Calculate the planning time
+    double dPlanningTime = (double)((tEnd - tStart)/CLOCKS_PER_SEC);
+
+    // Save the planning data
+    _writePlannerOutput(dPlanningTime, plan);
+
+    // Return the plan
+    return plan;
+}
+
+///
+/// \brief FootstepPlanner::runRRTPlanner
+/// \param feet
+/// \param currentLocation
+/// \param goalLocation
+/// \param obstacles
+/// \return
+///
+vector<FootLocation> FootstepPlanner::runRRTPlanner(std::vector<Foot> feet, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles)
+{
+    // Initialize Current Position RRT
+    flann::Matrix<double> initialState(new double[currentLocation.size() * 2], currentLocation.size(), 2);
+    // Add each of the start locations
+    for(int i = 0; i < currentLocation.size(); i++)
+    {
+        initialState[i][0] = currentLocation[i].getLocation()[0]; // X Position
+        initialState[i][1] = currentLocation[i].getLocation()[1]; // Y Position
+    }
+    // Create the index with only the initial state
+    flann::Index< flann::L2<double> > startRRT(initialState, flann::KDTreeIndexParams(4));
+    startRRT.buildIndex();
+
+    // Initialize Goal Position RRT
+    flann::Matrix<double> goalState(new double[goalLocation.size() * 2], goalLocation.size(), 2);
+    // Add each of the goal locations
+    for(int i = 0; i < goalLocation.size(); i++)
+    {
+        goalState[i][0] = goalLocation[i].getLocation()[0]; // X Position
+        goalState[i][1] = goalLocation[i].getLocation()[1]; // Y Position
+    }
+    // Create the index with only the goal state
+    flann::Index< flann::L2<double> > goalRRT(goalState, flann::KDTreeIndexParams(4));
+    goalRRT.buildIndex();
+
+    // Iterate until we find a path
+    /*
+    do
+    {
+
+    }
+    while(true);
+    */
+}
+
+///
+/// \brief FootstepPlanner::getStaticPlan
+/// \param feet
+/// \return
+///
+vector<FootLocation> FootstepPlanner::getStaticPlan(vector<Foot> feet)
+{
+    vector<FootLocation> plan;
+    plan.push_back(FootLocation(Vector2d(5.0d, 3.0d), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2d(10.0d, 0.0d), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2d(16.0d, 3.0d), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2d(22.0d, 0.0d), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2d(29.0d, 3.0d), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2d(36.0d, 0.0d), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2d(43.0d, 3.0d), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2d(50.0d, 0.0d), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2d(57.0d, 3.0d), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2d(62.0d, 0.0d), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, feet[1]));
 
     return plan;
 }
 
-vector<FootLocation> FootstepPlanner::getStaticPlan(vector<Foot> feet)
+///
+/// \brief FootstepPlanner::writePlannerOutput
+/// \param time
+/// \param plan
+///
+void FootstepPlanner::_writePlannerOutput(double time, vector<FootLocation> plan)
 {
-    vector<FootLocation> plan;
-    plan.push_back(FootLocation(Vector2f(5.0f, 3.0f), 0.0f, feet[0]));
-    plan.push_back(FootLocation(Vector2f(10.0f, 0.0f), 0.0f, feet[1]));
-    plan.push_back(FootLocation(Vector2f(16.0f, 3.0f), 0.0f, feet[0]));
-    plan.push_back(FootLocation(Vector2f(22.0f, 0.0f), 0.0f, feet[1]));
-    plan.push_back(FootLocation(Vector2f(29.0f, 3.0f), 0.0f, feet[0]));
-    plan.push_back(FootLocation(Vector2f(36.0f, 0.0f), 0.0f, feet[1]));
-    plan.push_back(FootLocation(Vector2f(43.0f, 3.0f), 0.0f, feet[0]));
-    plan.push_back(FootLocation(Vector2f(50.0f, 0.0f), 0.0f, feet[1]));
-    plan.push_back(FootLocation(Vector2f(57.0f, 3.0f), 0.0f, feet[0]));
-    plan.push_back(FootLocation(Vector2f(62.0f, 0.0f), 0.0f, feet[1]));
-    plan.push_back(FootLocation(Vector2f(67.0f, 3.0f), 0.0f, feet[0]));
-    plan.push_back(FootLocation(Vector2f(67.0f, 0.0f), 0.0f, feet[1]));
-
-    return plan;
+    printf("Time taken: %.2fs\n", time);
+    // Write the edges out to a file
+    ofstream myfile ("PlannerOutput.txt");
+    if (myfile.is_open())
+    {
+        myfile << "Planning Time: " << time << endl;
+        for(int i = 0; i < plan.size(); i++)
+        {
+            myfile << plan[i].getLocation()[0] << ",";
+            myfile << plan[i].getLocation()[1] << ",";
+            myfile << plan[i].getTheta() << ",";
+            myfile << plan[i].getFoot().getName() << endl;
+        }
+        //myfile << plan << endl;
+        myfile.close();
+    }
+    else cout << "Unable to open file";
 }

@@ -50,6 +50,11 @@
 #include "FootLocation.h"
 #include "Line.h"
 #include <eigen3/Eigen/Core>
+#include <stdlib.h>
+#include <time.h>
+#include <flann/flann.hpp>
+#include <iostream>
+#include <fstream>
 
 namespace fsp {
 
@@ -84,10 +89,12 @@ class FootstepPlanner
         std::vector<FootLocation> generatePlan(int plannerType, std::vector<Foot> feet, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
         std::vector<FootLocation> getStaticPlan(std::vector<Foot> feet);
 
+        std::vector<FootLocation> runRRTPlanner(std::vector<Foot> feet, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
+
     protected:
 
     private:
-
+        void _writePlannerOutput(double time, std::vector<FootLocation> plan);
 };
 
 } // namespace fsp

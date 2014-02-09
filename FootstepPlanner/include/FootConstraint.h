@@ -45,6 +45,36 @@
 #ifndef FOOTCONSTRAINT_H
 #define FOOTCONSTRAINT_H
 
+#include "Foot.h"
+#include <eigen3/Eigen/Core>
 
+namespace fsp {
+
+/*!
+  * \class FootConstraint
+  * \brief A FootConstraint keeps track of a constraint for a particular foot in reference to another foot.
+  *
+  *
+  */
+class FootConstraint
+{
+    public:
+        FootConstraint( fsp::Foot& foot, fsp::Foot& refFoot,
+                        double minDeltaX, double maxDeltaX,
+                        double minDeltaY, double minDeltaY,
+                        double minDeltaTheta, double minDeltaTheta);
+    protected:
+
+    private:
+        double _MinDeltaX;
+        double _MaxDeltaX;
+        double _MinDeltaY;
+        double _MaxDeltaY;
+        double _MinDeltaTheta;
+        double _MaxDeltaTheta;
+        fsp::Foot _Foot;
+        fsp::Foot _ReferenceFoot;
+    };
+} // namespace fsp
 
 #endif
