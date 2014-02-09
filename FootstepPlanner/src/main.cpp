@@ -45,6 +45,7 @@
 #include <osg/Geode>
 #include <osg/Geometry>
 #include <osg/PositionAttitudeTransform>
+#include <osg/ShapeDrawable>
 #include <osg/LineSegment>
 #include <osgViewer/Viewer>
 #include <osg/LineWidth>
@@ -110,6 +111,23 @@ int main()
     return 0;
 }
 
+osg::PositionAttitudeTransform* getBoxObstacle(Vec3 center, float lengthX, float lengthY, float lengthZ, float theta) {
+    Geode* boxGeode = new Geode(); 
+		
+		osg::Box* boxPointer = new osg::Box(center, lengthX, lengthY, lengthZ);
+		osg::ShapeDrawable* boxShape = new osg::ShapeDrawable(boxPointer);
+		boxGeode->addDrawable(boxShape);
+
+    osg::PositionAttitudeTransform* boxTransform = new osg::PositionAttitudeTransform();
+		boxTransform->addChild(boxGeode);
+		
+		osg::Vec3 boxPosition(0, 0, 0);
+    boxTransform->setPosition(boxPosition);
+    boxTransform->setAttitude(osg::Quat(osg::DegreesToRadians(theta), osg::Vec3(0, 0, 1)));
+
+		return boxTransform;
+}
+
 ///
 /// \brief getFootTransform - Function to get the transform for each of the foot.
 /// \param location - To get the location/orientation of the transform to be generated.
@@ -153,15 +171,16 @@ PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 color)
 
 		footTransform->addChild(currentPositionGeode);
  
-    osg::Vec3 footPosition(loc[0], loc[1], 0);
+    osg::Vec3 footPosition(0, 0, 0);
     footTransform->setPosition(footPosition);
     footTransform->setAttitude(osg::Quat(osg::DegreesToRadians(theta), osg::Vec3(0, 0, 1)));
 
 		return footTransform;
 }
  
+
 ///
-/// \fn visualizePlan
+/// \fn visualizePla
 /// \brief visualizePlan
 /// \param currentLocation
 /// \param goalLocation
@@ -194,28 +213,7 @@ void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<Fo
 		}
 
     // Add the obstacles (red)
-    Geode* obstacleGeode = new Geode();
-    Geometry* obstacleGeometry = new Geometry();
-    Vec4Array* obstacleColors = new Vec4Array;
-    obstacleColors->push_back(red);
-
-    Vec3Array* obstacleVertices = new Vec3Array;
-    for(int i = 0; i < obstacles.size(); i++)
-    {
-        Line line = obstacles[i];
-        Vector2d start = line.getStart();
-        Vector2d end = line.getEnd();
-        obstacleVertices->push_back(Vec3(start[0], start[1], 0));
-        obstacleVertices->push_back(Vec3(end[0], end[1], 0));
-    }
-    // Set the Vertex array
-    obstacleGeometry->setVertexArray(obstacleVertices);
-    obstacleGeometry->setColorArray(obstacleColors);
-    obstacleGeometry->setColorBinding(Geometry::BIND_OVERALL);
-
-    obstacleGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,obstacleVertices->size()));
-    obstacleGeode->addDrawable(obstacleGeometry);
-    root->addChild(obstacleGeode);
+		root->addChild(getBoxObstacle(Vec3(30.0, 20.0, 5.0), 60.0, 20.0, 10.0, 0.0));
 
     // Add the steps (yellow)
     for(int i = 0; i < plan.size(); i++)
