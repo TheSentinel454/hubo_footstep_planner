@@ -127,6 +127,38 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<Foot> feet, vector<Fo
     /*
     do
     {
+        // First let's grow the start RRT
+
+        // Get the Random Point we want to grow towards
+        // We are going to flip a coin to see if we use the goal RRT's
+        // latest point, or we use a randomly generated point
+
+        // Find the nearest neighbor in the start RRT
+
+        // Determine the next foot in our step sequence (Left -> Right or Right -> Left)
+
+        // Randomly generate foot location configuration
+
+        // Check for collision (possibly regenerate)
+
+        // Add to the start RRT
+
+        // Now let's grow the goal RRT
+
+        // Get the Random Point we want to grow towards
+        // Same as above, coin flipping time
+
+        // Find the nearest neighbor in the goal RRT
+
+        // Determine the next foot in our step sequence (Left -> Right or Right -> Left)
+
+        // Randomly generate foot location configuration
+
+        // Check for collision (possibly regenerate)
+
+        // Add to the goal RRT
+
+        // Check for goal/start RRT connectivity
 
     }
     while(true);
