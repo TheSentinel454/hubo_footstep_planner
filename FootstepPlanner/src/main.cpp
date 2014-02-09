@@ -70,24 +70,24 @@ int main()
     srand(time(NULL));
 
     // Initialize the feet
-    vector<Foot> feet;
-    feet.push_back(Foot(2.0f, 4.0f, "Left"));
-    feet.push_back(Foot(2.0f, 4.0f, "Right"));
+    //vector<Foot> feet;
+    FEET.push_back(Foot(2.0f, 4.0f, "Left"));
+    FEET.push_back(Foot(2.0f, 4.0f, "Right"));
 
     // Initialize the foot constraints
     vector<FootConstraint> constraints;
-    constraints.push_back(FootConstraint(feet[0], feet[1], 2.0d, 4.0d, -4.0d, 4.0d, -25.0d, 30.0d));
-    constraints.push_back(FootConstraint(feet[1], feet[0], 2.0d, 4.0d, -4.0d, 4.0d, -25.0d, 30.0d));
+    constraints.push_back(FootConstraint(0, 1, 2.0d, 4.0d, -4.0d, 4.0d, -25.0d, 30.0d));
+    constraints.push_back(FootConstraint(1, 0, 2.0d, 4.0d, -4.0d, 4.0d, -25.0d, 30.0d));
 
     // Initialize the current location
     vector<FootLocation> currentLoc;
-    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, feet[0]));
-    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, feet[1]));
+    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, 0));
+    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, 1));
 
     // Initialize the goal location
     vector<FootLocation> goalLoc;
-    goalLoc.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, feet[0]));
-    goalLoc.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, feet[1]));
+    goalLoc.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, 0));
+    goalLoc.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, 1));
 
     // Initialize the obstacles
     vector<Line> obs;
@@ -103,8 +103,8 @@ int main()
 
     // Initialize the planner
     FootstepPlanner planner;
-    vector<FootLocation> plan = planner.getStaticPlan(feet);
-    vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, feet, constraints, currentLoc, goalLoc, obs);
+    vector<FootLocation> plan = planner.getStaticPlan();
+    vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, FEET, constraints, currentLoc, goalLoc, obs);
     //visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
     visualizePlan(currentLoc, goalLoc, obs, plan);
     return 0;
@@ -125,8 +125,8 @@ PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 color)
     Vec3Array* currentPositionVertices = new Vec3Array;
     
     Vector2d loc = location.getLocation();
-    double xOffset = location.getFoot().getLength() / 2;
-    double yOffset = location.getFoot().getWidth() / 2;
+    double xOffset = FEET[location.getFootIndex()].getLength() / 2;
+    double yOffset = FEET[location.getFootIndex()].getWidth() / 2;
 		float theta = location.getTheta();
     currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
     currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
@@ -286,8 +286,8 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     {
         FootLocation fl = currentLocation[i];
         Vector2d loc = fl.getLocation();
-        double xOffset = fl.getFoot().getLength() / 2;
-        double yOffset = fl.getFoot().getWidth() / 2;
+        double xOffset = FEET[fl.getFootIndex()].getLength() / 2;
+        double yOffset = FEET[fl.getFootIndex()].getWidth() / 2;
         currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
         currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
         currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
@@ -323,8 +323,8 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     {
         FootLocation fl = goalLocation[i];
         Vector2d loc = fl.getLocation();
-        double xOffset = fl.getFoot().getLength() / 2;
-        double yOffset = fl.getFoot().getWidth() / 2;
+        double xOffset = FEET[fl.getFootIndex()].getLength() / 2;
+        double yOffset = FEET[fl.getFootIndex()].getWidth() / 2;
         goalPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
         goalPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
         goalPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
@@ -385,8 +385,8 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     {
         FootLocation fl = plan[i];
         Vector2d loc = fl.getLocation();
-        double xOffset = fl.getFoot().getLength() / 2;
-        double yOffset = fl.getFoot().getWidth() / 2;
+        double xOffset = FEET[fl.getFootIndex()].getLength() / 2;
+        double yOffset = FEET[fl.getFootIndex()].getWidth() / 2;
         planPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
         planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
         planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));

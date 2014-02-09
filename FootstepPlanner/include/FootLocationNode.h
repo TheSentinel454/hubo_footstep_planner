@@ -42,23 +42,27 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FOOTLOCATION_H
-#define FOOTLOCATION_H
+#ifndef FOOTLOCATIONNODE_H
+#define FOOTLOCATIONNODE_H
 
 #include <eigen3/Eigen/Core>
+#include "FootLocation.h"
+#include <vector>
 
 namespace fsp {
 
 /*!
-  * \class FootLocation
-  * \brief A FootLocation keeps track of the foot location, angle, and a reference to a foot.
+  * \class FootLocationNode
+  * \brief A FootLocationNode keeps track of the foot location, angle, and a reference to a foot.
   *
   *
   */
-class FootLocation
+class FootLocationNode
 {
     public:
-        FootLocation(Eigen::Vector2d location, float theta, int footIndex);
+        FootLocationNode();
+        FootLocationNode(fsp::FootLocation location);
+        FootLocationNode(Eigen::Vector2d location, float theta, int footIndex);
 
         Eigen::Vector2d getLocation() const;
         float getTheta() const;
@@ -69,6 +73,8 @@ class FootLocation
         Eigen::Vector2d _Location;
         float _Theta;
         int _FootIndex;
+        FootLocationNode* _Parent;
+        std::vector<FootLocationNode*> _Children;
     };
 } // namespace fsp
 

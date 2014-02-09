@@ -46,13 +46,13 @@
 
 using namespace fsp;
 
-FootLocation::FootLocation(Eigen::Vector2d location, float theta, Foot& foot)
+FootLocation::FootLocation(Eigen::Vector2d location, float theta, int footIndex)
 {
     _Location = location;
     _Theta = theta;
-    _Foot = foot;
+    _FootIndex = footIndex;
 }
 
 Eigen::Vector2d FootLocation::getLocation() const { return _Location; }
 float FootLocation::getTheta() const { return _Theta; }
-Foot FootLocation::getFoot() const { return _Foot; }
+int FootLocation::getFootIndex() const { return _FootIndex; }

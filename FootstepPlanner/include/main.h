@@ -56,4 +56,6 @@ using namespace std;
 void visualizePlan(vector<FootLocation>, vector<FootLocation>, vector<Line>, vector<FootLocation>);
 void visualizePlanUsingTransform(vector<FootLocation>, vector<FootLocation>, vector<Line>, vector<FootLocation>);
 
+std::vector<Foot> FEET;
+
 #endif

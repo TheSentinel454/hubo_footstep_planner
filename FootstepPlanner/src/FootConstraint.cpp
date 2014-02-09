@@ -46,13 +46,13 @@
 
 using namespace fsp;
 
-FootConstraint::FootConstraint(Foot &foot, Foot &refFoot,
+FootConstraint::FootConstraint(int footIndex, int refFootIndex,
                                double minDeltaX, double maxDeltaX,
                                double minDeltaY, double maxDeltaY,
                                double minDeltaTheta, double maxDeltaTheta)
 {
-    _Foot = foot;
-    _ReferenceFoot = refFoot;
+    _FootIndex = footIndex;
+    _ReferenceFootIndex = refFootIndex;
     _MinDeltaX = minDeltaX;
     _MaxDeltaX = maxDeltaX;
     _MinDeltaY = minDeltaY;
@@ -61,8 +61,8 @@ FootConstraint::FootConstraint(Foot &foot, Foot &refFoot,
     _MaxDeltaTheta = maxDeltaTheta;
 }
 
-Foot FootConstraint::getFoot() const { return _Foot; }
-Foot FootConstraint::getRefFoot() const { return _ReferenceFoot; }
+int FootConstraint::getFootIndex() const { return _FootIndex; }
+int FootConstraint::getRefFootIndex() const { return _ReferenceFootIndex; }
 double FootConstraint::getMinimumDeltaX() const { return _MinDeltaX; }
 double FootConstraint::getMaximumDeltaX() const { return _MaxDeltaX; }
 double FootConstraint::getMinimumDeltaY() const { return _MinDeltaY; }

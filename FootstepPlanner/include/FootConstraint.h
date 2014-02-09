@@ -60,13 +60,13 @@ namespace fsp {
 class FootConstraint
 {
     public:
-        FootConstraint( fsp::Foot& foot, fsp::Foot& refFoot,
+        FootConstraint( int footIndex, int refFootIndex,
                         double minDeltaX, double maxDeltaX,
                         double minDeltaY, double maxDeltaY,
                         double minDeltaTheta, double maxDeltaTheta);
 
-        Foot getFoot() const;
-        Foot getRefFoot() const;
+        int getFootIndex() const;
+        int getRefFootIndex() const;
         double getMinimumDeltaX() const;
         double getMaximumDeltaX() const;
         double getMinimumDeltaY() const;
@@ -82,8 +82,8 @@ class FootConstraint
         double _MaxDeltaY;
         double _MinDeltaTheta;
         double _MaxDeltaTheta;
-        fsp::Foot _Foot;
-        fsp::Foot _ReferenceFoot;
+        int _FootIndex;
+        int _ReferenceFootIndex;
     };
 } // namespace fsp
 
