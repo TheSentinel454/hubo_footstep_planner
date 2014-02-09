@@ -46,12 +46,32 @@
 
 using namespace fsp;
 using namespace std;
+using namespace Eigen;
 
 FootstepPlanner::FootstepPlanner(){}
 
 vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<Foot> feet, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
     vector<FootLocation> plan;
+
+    return plan;
+}
+
+vector<FootLocation> FootstepPlanner::getStaticPlan(vector<Foot> feet)
+{
+    vector<FootLocation> plan;
+    plan.push_back(FootLocation(Vector2f(5.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(10.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(16.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(22.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(29.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(36.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(43.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(50.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(57.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(62.0f, 0.0f), 0.0f, feet[1]));
+    plan.push_back(FootLocation(Vector2f(67.0f, 3.0f), 0.0f, feet[0]));
+    plan.push_back(FootLocation(Vector2f(67.0f, 0.0f), 0.0f, feet[1]));
 
     return plan;
 }

@@ -49,6 +49,7 @@
 #include <vector>
 #include "FootLocation.h"
 #include "Line.h"
+#include <eigen3/Eigen/Core>
 
 namespace fsp {
 
@@ -81,6 +82,7 @@ class FootstepPlanner
         FootstepPlanner();
 
         std::vector<FootLocation> generatePlan(int plannerType, std::vector<Foot> feet, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
+        std::vector<FootLocation> getStaticPlan(std::vector<Foot> feet);
 
     protected:
 
