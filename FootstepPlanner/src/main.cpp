@@ -83,7 +83,7 @@ int main()
     // Initialize the current location
     vector<FootLocation> currentLoc;
     currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, 0));
-    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, 1));
+    currentLoc.push_back(FootLocation(Vector2d(0.0d, 0.0d), 0.0f, 1));
 
     // Initialize the goal location
     vector<FootLocation> goalLoc;
@@ -97,7 +97,7 @@ int main()
     obs.push_back(Line(Vector2d(55.0d, 18.0d), Vector2d(0.0d, 23.0d)));
     obs.push_back(Line(Vector2d(0.0d, 23.0d), Vector2d(-10.0d, 7.0d)));
     // Second obstacle
-    obs.push_back(Line(Vector2d(20.0d -7.0d), Vector2d(25.0d, -38.0d)));
+    obs.push_back(Line(Vector2d(20.0d, -7.0d), Vector2d(25.0d, -38.0d)));
     obs.push_back(Line(Vector2d(25.0d, -38.0d), Vector2d(25.0d, -50.0d)));
     obs.push_back(Line(Vector2d(25.0d, -50.0d), Vector2d(10.0d, -17.0d)));
     obs.push_back(Line(Vector2d(10.0d, -17.0d), Vector2d(20.0d, -7.0d)));
@@ -105,9 +105,9 @@ int main()
     // Initialize the planner
     FootstepPlanner planner;
     vector<FootLocation> plan = planner.getStaticPlan();
-    vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, FEET, constraints, currentLoc, goalLoc, obs);
-    //visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
-    visualizePlan(currentLoc, goalLoc, obs, plan);
+    //vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, FEET, constraints, currentLoc, goalLoc, obs);
+    visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
+    //visualizePlan(currentLoc, goalLoc, obs, plan);
     return 0;
 }
 
@@ -145,42 +145,42 @@ PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 color)
     Vector2d loc = location.getLocation();
     double xOffset = FEET[location.getFootIndex()].getLength() / 2;
     double yOffset = FEET[location.getFootIndex()].getWidth() / 2;
-		float theta = location.getTheta();
+    float theta = location.getTheta();
     currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
     currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
     currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
     currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] + yOffset, 0));
     
-		// Set the Vertex array
+    // Set the Vertex array
     currentPositionGeometry->setVertexArray(currentPositionVertices);
-		// Add foot
-		DrawElementsUInt* currentFoot = new DrawElementsUInt(PrimitiveSet::QUADS, 0);
-		currentFoot->push_back(0);
-		currentFoot->push_back(1);
-		currentFoot->push_back(2);
-		currentFoot->push_back(3);
-		currentPositionGeometry->addPrimitiveSet(currentFoot);
-		currentPositionColors->push_back(color);
+    // Add foot
+    DrawElementsUInt* currentFoot = new DrawElementsUInt(PrimitiveSet::QUADS, 0);
+    currentFoot->push_back(0);
+    currentFoot->push_back(1);
+    currentFoot->push_back(2);
+    currentFoot->push_back(3);
+    currentPositionGeometry->addPrimitiveSet(currentFoot);
+    currentPositionColors->push_back(color);
 
     currentPositionGeometry->setColorArray(currentPositionColors);
     currentPositionGeometry->setColorBinding(Geometry::BIND_PER_PRIMITIVE_SET);
     currentPositionGeode->addDrawable(currentPositionGeometry);
 
-		//Create the transform, and set the rotation for the given foot location.
+    //Create the transform, and set the rotation for the given foot location.
     osg::PositionAttitudeTransform* footTransform = new osg::PositionAttitudeTransform();
 
-		footTransform->addChild(currentPositionGeode);
+    footTransform->addChild(currentPositionGeode);
  
     osg::Vec3 footPosition(0, 0, 0);
     footTransform->setPosition(footPosition);
     footTransform->setAttitude(osg::Quat(osg::DegreesToRadians(theta), osg::Vec3(0, 0, 1)));
 
-		return footTransform;
+    return footTransform;
 }
  
 
 ///
-/// \fn visualizePla
+/// \fn visualizePlan
 /// \brief visualizePlan
 /// \param currentLocation
 /// \param goalLocation
@@ -200,25 +200,25 @@ void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<Fo
     Vec4 black = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
     Vec4 white = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-		// Add the current position(blue). 
-		for(int i = 0; i < currentLocation.size();i++) 
-		{
-				root->addChild(getFootTransform(currentLocation[i], blue));
-		}
+    // Add the current position(blue).
+    for(int i = 0; i < currentLocation.size();i++)
+    {
+        root->addChild(getFootTransform(currentLocation[i], blue));
+    }
 
     // Add the goal position (green)
-		for(int i = 0; i < goalLocation.size();i++) 
-		{
-				root->addChild(getFootTransform(goalLocation[i], green));
-		}
+    for(int i = 0; i < goalLocation.size();i++)
+    {
+        root->addChild(getFootTransform(goalLocation[i], green));
+    }
 
     // Add the obstacles (red)
-		root->addChild(getBoxObstacle(Vec3(30.0, 20.0, 5.0), 60.0, 20.0, 10.0, 0.0));
+    root->addChild(getBoxObstacle(Vec3(30.0, 20.0, 1.25), 60.0, 20.0, 2.5, 0.0));
 
     // Add the steps (yellow)
     for(int i = 0; i < plan.size(); i++)
     {
-				root->addChild(getFootTransform(plan[i], yellow));
+        root->addChild(getFootTransform(plan[i], yellow));
     }
 
     // Add the plan outline (black)
@@ -232,8 +232,7 @@ void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<Fo
     planOutlineVertices->push_back(Vec3(currentLocation[0].getLocation()[0], currentLocation[0].getLocation()[1], 0));
     for(int i = 0; i < plan.size(); i++)
     {
-        FootLocation fl = plan[i];
-        Vector2d loc = fl.getLocation();
+        Vector2d loc = plan[i].getLocation();
         planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
         planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
     }
