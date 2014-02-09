@@ -42,9 +42,30 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#include "FootConstraint.h"
 
-void pyramidTest();
+using namespace fsp;
 
-#endif
+FootConstraint::FootConstraint(Foot &foot, Foot &refFoot,
+                               double minDeltaX, double maxDeltaX,
+                               double minDeltaY, double maxDeltaY,
+                               double minDeltaTheta, double maxDeltaTheta)
+{
+    _Foot = foot;
+    _ReferenceFoot = refFoot;
+    _MinDeltaX = minDeltaX;
+    _MaxDeltaX = maxDeltaX;
+    _MinDeltaY = minDeltaY;
+    _MaxDeltaY = maxDeltaY;
+    _MinDeltaTheta = minDeltaTheta;
+    _MaxDeltaTheta = maxDeltaTheta;
+}
+
+Foot FootConstraint::getFoot() const { return _Foot; }
+Foot FootConstraint::getRefFoot() const { return _ReferenceFoot; }
+double FootConstraint::getMinimumDeltaX() const { return _MinDeltaX; }
+double FootConstraint::getMaximumDeltaX() const { return _MaxDeltaX; }
+double FootConstraint::getMinimumDeltaY() const { return _MinDeltaY; }
+double FootConstraint::getMaximumDeltaY() const { return _MaxDeltaY; }
+double FootConstraint::getMinimumDeltaTheta() const { return _MinDeltaTheta; }
+double FootConstraint::getMaximumDeltaTheta() const { return _MaxDeltaTheta; }

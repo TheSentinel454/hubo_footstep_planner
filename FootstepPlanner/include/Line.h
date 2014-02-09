@@ -63,6 +63,8 @@ class Line
         Eigen::Vector2d getStart() const;
         Eigen::Vector2d getEnd() const;
 
+        bool isCollision(Line line) const;
+
     protected:
 
     private:

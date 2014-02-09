@@ -47,6 +47,7 @@
 
 #include "Foot.h"
 #include <eigen3/Eigen/Core>
+#include "fcl/collision.h"
 
 namespace fsp {
 
@@ -61,8 +62,17 @@ class FootConstraint
     public:
         FootConstraint( fsp::Foot& foot, fsp::Foot& refFoot,
                         double minDeltaX, double maxDeltaX,
-                        double minDeltaY, double minDeltaY,
-                        double minDeltaTheta, double minDeltaTheta);
+                        double minDeltaY, double maxDeltaY,
+                        double minDeltaTheta, double maxDeltaTheta);
+
+        Foot getFoot() const;
+        Foot getRefFoot() const;
+        double getMinimumDeltaX() const;
+        double getMaximumDeltaX() const;
+        double getMinimumDeltaY() const;
+        double getMaximumDeltaY() const;
+        double getMinimumDeltaTheta() const;
+        double getMaximumDeltaTheta() const;
     protected:
 
     private:

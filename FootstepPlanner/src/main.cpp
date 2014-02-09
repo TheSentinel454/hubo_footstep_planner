@@ -60,23 +60,36 @@ using namespace osg;
 using namespace fsp;
 using namespace Eigen;
 
+///
+/// \brief main
+/// \return
+///
 int main()
 {
     // Initialize random seed
     srand(time(NULL));
-    //pyramidTest();
+
+    // Initialize the feet
     vector<Foot> feet;
     feet.push_back(Foot(2.0f, 4.0f, "Left"));
     feet.push_back(Foot(2.0f, 4.0f, "Right"));
 
+    // Initialize the foot constraints
+    vector<FootConstraint> constraints;
+    constraints.push_back(FootConstraint(feet[0], feet[1], 2.0d, 4.0d, -4.0d, 4.0d, -25.0d, 30.0d));
+    constraints.push_back(FootConstraint(feet[1], feet[0], 2.0d, 4.0d, -4.0d, 4.0d, -25.0d, 30.0d));
+
+    // Initialize the current location
     vector<FootLocation> currentLoc;
     currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, feet[0]));
     currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, feet[1]));
 
+    // Initialize the goal location
     vector<FootLocation> goalLoc;
     goalLoc.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, feet[0]));
     goalLoc.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, feet[1]));
 
+    // Initialize the obstacles
     vector<Line> obs;
     // First obstacle
     obs.push_back(Line(Vector2d(-10.0d, 7.0d), Vector2d(55.0d, 18.0d)));
@@ -88,23 +101,22 @@ int main()
     obs.push_back(Line(Vector2d(25.0d, -50.0d), Vector2d(10.0d, -17.0d)));
     obs.push_back(Line(Vector2d(10.0d, -17.0d), Vector2d(20.0d, -7.0d)));
 
+    // Initialize the planner
     FootstepPlanner planner;
     vector<FootLocation> plan = planner.getStaticPlan(feet);
-    vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, feet, currentLoc, goalLoc, obs);
+    vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, feet, constraints, currentLoc, goalLoc, obs);
     //visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
     visualizePlan(currentLoc, goalLoc, obs, plan);
     return 0;
 }
 
-/*
- * Function to get the transform for each of the foot. 
- * Input Params : 
- * Vector<FootLocation> :  To get the location/orientation of the transform to be generated. 
- * Vec4 Color : To signify the color of the transform to be generated. 
- * Output Values :
- * To throw the output transform which would be added to the root. 
- */
-osg::PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 color) 
+///
+/// \brief getFootTransform - Function to get the transform for each of the foot.
+/// \param location - To get the location/orientation of the transform to be generated.
+/// \param color - To signify the color of the transform to be generated.
+/// \return - To throw the output transform which would be added to the root.
+///
+PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 color)
 {
     //Create the geode, and set the location values according to the given location. 
     Geode* currentPositionGeode = new Geode();
@@ -242,6 +254,7 @@ void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<Fo
     viewer.setSceneData(root);
     viewer.run();
 }
+
 ///
 /// \fn visualizePlan
 /// \brief visualizePlan
@@ -352,29 +365,6 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
         obstacleVertices->push_back(Vec3(start[0], start[1], 0));
         obstacleVertices->push_back(Vec3(end[0], end[1], 0));
     }
-    /*
-    for(int i = 0; i < obstacles.size(); i++)
-    {
-        FootLocation fl = plan[i];
-        Vector2f loc = fl.getLocation();
-        float xOffset = fl.getFoot().getLength() / 2;
-        float yOffset = fl.getFoot().getWidth() / 2;
-        planPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
-        planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
-        planPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
-        planPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] + yOffset, 0));
-    }
-    // Set the Vertex array
-    obstacleGeometry->setVertexArray(planPositionVertices);
-    // Add each of the lines
-    DrawElementsUInt* obstacle = new DrawElementsUInt(PrimitiveSet::LINE_LOOP, 0);
-    for(int i = 0; i < obstacles.size(); i++)
-    {
-        // Add line
-        obstacle->push_back(i);
-    }
-    obstacleGeometry->addPrimitiveSet(obstacle);
-    */
     // Set the Vertex array
     obstacleGeometry->setVertexArray(obstacleVertices);
     obstacleGeometry->setColorArray(obstacleColors);
@@ -453,76 +443,3 @@ void visualizePlan(vector<FootLocation> currentLocation, vector<FootLocation> go
     viewer.setSceneData(root);
     viewer.run();
 }
-
-void pyramidTest()
-{
-    Group* root = new Group();
-    Geode* pyramidGeode = new Geode();
-    Geometry* pyramidGeometry = new Geometry();
-
-    pyramidGeode->addDrawable(pyramidGeometry);
-    root->addChild(pyramidGeode);
-
-    Vec3Array* pyramidVertices = new Vec3Array;
-    pyramidVertices->push_back(Vec3(0,0,0));
-    pyramidVertices->push_back(Vec3(10,0,0));
-    pyramidVertices->push_back(Vec3(10,10,0));
-    pyramidVertices->push_back(Vec3(0,10,0));
-    pyramidVertices->push_back(Vec3(5,5,10));
-
-    pyramidGeometry->setVertexArray(pyramidVertices);
-    DrawElementsUInt* pyramidBase = new DrawElementsUInt(PrimitiveSet::QUADS, 0);
-    pyramidBase->push_back(3);
-    pyramidBase->push_back(2);
-    pyramidBase->push_back(1);
-    pyramidBase->push_back(0);
-    pyramidGeometry->addPrimitiveSet(pyramidBase);
-
-    DrawElementsUInt* pyramidFaceOne = new DrawElementsUInt(PrimitiveSet::TRIANGLES, 0);
-    pyramidFaceOne->push_back(0);
-    pyramidFaceOne->push_back(1);
-    pyramidFaceOne->push_back(4);
-    pyramidGeometry->addPrimitiveSet(pyramidFaceOne);
-
-    DrawElementsUInt* pyramidFaceTwo = new DrawElementsUInt(PrimitiveSet::TRIANGLES, 0);
-    pyramidFaceTwo->push_back(1);
-    pyramidFaceTwo->push_back(2);
-    pyramidFaceTwo->push_back(4);
-    pyramidGeometry->addPrimitiveSet(pyramidFaceTwo);
-
-    DrawElementsUInt* pyramidFaceThree = new DrawElementsUInt(PrimitiveSet::TRIANGLES, 0);
-    pyramidFaceThree->push_back(2);
-    pyramidFaceThree->push_back(3);
-    pyramidFaceThree->push_back(4);
-    pyramidGeometry->addPrimitiveSet(pyramidFaceThree);
-
-    DrawElementsUInt* pyramidFaceFour = new DrawElementsUInt(PrimitiveSet::TRIANGLES, 0);
-    pyramidFaceFour->push_back(3);
-    pyramidFaceFour->push_back(0);
-    pyramidFaceFour->push_back(4);
-    pyramidGeometry->addPrimitiveSet(pyramidFaceFour);
-
-    Vec4Array* colors = new Vec4Array;
-    colors->push_back(Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-    colors->push_back(Vec4(0.0f, 1.0f, 0.0f, 1.0f));
-    colors->push_back(Vec4(0.0f, 0.0f, 1.0f, 1.0f));
-    colors->push_back(Vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    colors->push_back(Vec4(1.0f, 0.0f, 0.0f, 1.0f));
-
-    pyramidGeometry->setColorArray(colors);
-    pyramidGeometry->setColorBinding(Geometry::BIND_PER_VERTEX);
-
-//    osg::PositionAttitudeTransform* pyramidTwoXForm =
-//            new osg::PositionAttitudeTransform();
-
-//    root->addChild(pyramidTwoXForm);
-//    pyramidTwoXForm->addChild(pyramidGeode);
-
-//    osg::Vec3 pyramidTwoPosition(15, 0, 0);
-//    pyramidTwoXForm->setPosition(pyramidTwoPosition);
-
-    osgViewer::Viewer viewer;
-    viewer.setSceneData(root);
-    viewer.run();
-}
-

@@ -46,11 +46,49 @@
 
 using namespace fsp;
 
+///
+/// \brief Line::Line
+/// \param start
+/// \param end
+///
 Line::Line(Eigen::Vector2d start, Eigen::Vector2d end)
 {
     _Start = start;
     _End = end;
 }
 
+///
+/// \brief Line::getStart
+/// \return
+///
 Eigen::Vector2d Line::getStart() const { return _Start; }
+
+///
+/// \brief Line::getEnd
+/// \return
+///
 Eigen::Vector2d Line::getEnd() const { return _End; }
+
+///
+/// \brief Line::isCollision
+/// \param line
+/// \return
+///
+bool Line::isCollision(Line line) const
+{
+    // a = _Start
+    // b = _End
+    // c = line.getStart()
+    // d = line.getEnd();
+    float denominator = ((_End[0] - _Start[0]) * (line.getEnd()[1] - line.getStart()[1])) - ((_End[1] - _Start[1]) * (line.getEnd()[0] - line.getStart()[0]));
+    float numerator1 = ((_Start[1] - line.getStart()[1]) * (line.getEnd()[0] - line.getStart()[0])) - ((_Start[0] - line.getStart()[0]) * (line.getEnd()[1] - line.getStart()[1]));
+    float numerator2 = ((_Start[1] - line.getStart()[1]) * (_End[0] - _Start[0])) - ((_Start[0] - line.getStart()[0]) * (_End[1] - _Start[1]));
+
+    // Detect coincident lines
+    if (denominator == 0) return numerator1 == 0 && numerator2 == 0;
+
+    float r = numerator1 / denominator;
+    float s = numerator2 / denominator;
+
+    return (r >= 0 && r <= 1) && (s >= 0 && s <= 1);
+}

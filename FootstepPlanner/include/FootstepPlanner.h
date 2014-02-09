@@ -49,6 +49,7 @@
 #include <vector>
 #include "FootLocation.h"
 #include "Line.h"
+#include "FootConstraint.h"
 #include <eigen3/Eigen/Core>
 #include <stdlib.h>
 #include <time.h>
@@ -86,10 +87,10 @@ class FootstepPlanner
     public:
         FootstepPlanner();
 
-        std::vector<FootLocation> generatePlan(int plannerType, std::vector<Foot> feet, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
+        std::vector<FootLocation> generatePlan(int plannerType, std::vector<Foot> feet, std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
         std::vector<FootLocation> getStaticPlan(std::vector<Foot> feet);
 
-        std::vector<FootLocation> runRRTPlanner(std::vector<Foot> feet, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
+        std::vector<FootLocation> runRRTPlanner(std::vector<Foot> feet, std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
 
     protected:
 

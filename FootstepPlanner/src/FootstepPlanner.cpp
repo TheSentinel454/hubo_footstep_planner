@@ -63,7 +63,7 @@ FootstepPlanner::FootstepPlanner(){}
 /// \param obstacles
 /// \return
 ///
-vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<Foot> feet, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
+vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<Foot> feet, vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
     // Take a starting time stamp
     clock_t tStart = clock();
@@ -73,7 +73,7 @@ vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<Foot>
     {
         case PLANNER_TYPE_RRT:
         default:
-            plan = runRRTPlanner(feet, currentLocation, goalLocation, obstacles);
+            plan = runRRTPlanner(feet, constraints, currentLocation, goalLocation, obstacles);
             break;
     }
     // Take the ending time stamp
@@ -97,7 +97,7 @@ vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<Foot>
 /// \param obstacles
 /// \return
 ///
-vector<FootLocation> FootstepPlanner::runRRTPlanner(std::vector<Foot> feet, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles)
+vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<Foot> feet, vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
     // Initialize Current Position RRT
     flann::Matrix<double> initialState(new double[currentLocation.size() * 2], currentLocation.size(), 2);
