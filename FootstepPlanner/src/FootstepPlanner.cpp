@@ -52,18 +52,20 @@ using namespace flann;
 ///
 /// \brief FootstepPlanner::FootstepPlanner
 ///
-FootstepPlanner::FootstepPlanner(){}
+FootstepPlanner::FootstepPlanner(vector<Foot> feet)
+{
+    _Feet = feet;
+}
 
 ///
 /// \brief FootstepPlanner::generatePlan
 /// \param plannerType
-/// \param feet
 /// \param currentLocation
 /// \param goalLocation
 /// \param obstacles
 /// \return
 ///
-vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, const vector<Foot> feet, vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
+vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
     // Take a starting time stamp
     clock_t tStart = clock();
@@ -71,9 +73,12 @@ vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, const vector
     vector<FootLocation> plan;
     switch(plannerType)
     {
+        case PLANNER_TYPE_R_STAR:
+            plan = runRStarPlanner(constraints, currentLocation, goalLocation, obstacles);
+            break;
         case PLANNER_TYPE_RRT:
         default:
-            plan = runRRTPlanner(feet, constraints, currentLocation, goalLocation, obstacles);
+            plan = runRRTPlanner(constraints, currentLocation, goalLocation, obstacles);
             break;
     }
     // Take the ending time stamp
@@ -83,7 +88,7 @@ vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, const vector
     double dPlanningTime = (double)((tEnd - tStart)/CLOCKS_PER_SEC);
 
     // Save the planning data
-    _writePlannerOutput(dPlanningTime, feet, plan);
+    _writePlannerOutput(dPlanningTime, plan);
 
     // Return the plan
     return plan;
@@ -91,13 +96,12 @@ vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, const vector
 
 ///
 /// \brief FootstepPlanner::runRRTPlanner
-/// \param feet
 /// \param currentLocation
 /// \param goalLocation
 /// \param obstacles
 /// \return
 ///
-vector<FootLocation> FootstepPlanner::runRRTPlanner(const vector<Foot> feet, vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
+vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
     // Initialize Current Position RRT
     flann::Matrix<double> initialState(new double[currentLocation.size() * 2], currentLocation.size(), 2);
@@ -148,7 +152,7 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(const vector<Foot> feet, vec
 
         // Randomly generate foot location configuration (Collision detection is done when generating the foot)
         FootLocation* flNewStart;
-        if (_getRandomFootLocation(feet, constraints, obstacles, flNearestNeighbor, flNewStart))
+        if (_getRandomFootLocation(constraints, obstacles, flNearestNeighbor, flNewStart))
         {
             // Add to the start RRT
             flann::Matrix<double> mNewPoint(new double[1 * 2], 1, 2);
@@ -182,8 +186,20 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(const vector<Foot> feet, vec
 }
 
 ///
+/// \brief FootstepPlanner::runRStarPlanner
+/// \param constraints
+/// \param currentLocation
+/// \param goalLocation
+/// \param obstacles
+/// \return
+///
+vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
+{
+    // TODO: Mohit, add the R Star Planner here
+}
+
+///
 /// \brief FootstepPlanner::getStaticPlan
-/// \param feet
 /// \return
 ///
 vector<FootLocation> FootstepPlanner::getStaticPlan()
@@ -210,7 +226,7 @@ vector<FootLocation> FootstepPlanner::getStaticPlan()
 /// \param time
 /// \param plan
 ///
-void FootstepPlanner::_writePlannerOutput(double time, const vector<Foot> feet, vector<FootLocation> plan)
+void FootstepPlanner::_writePlannerOutput(double time, vector<FootLocation> plan)
 {
     printf("Time taken: %.2fs\n", time);
     // Write the edges out to a file
@@ -223,7 +239,7 @@ void FootstepPlanner::_writePlannerOutput(double time, const vector<Foot> feet, 
             myfile << plan[i].getLocation()[0] << ",";
             myfile << plan[i].getLocation()[1] << ",";
             myfile << plan[i].getTheta() << ",";
-            myfile << feet[plan[i].getFootIndex()].getName() << endl;
+            myfile << _Feet[plan[i].getFootIndex()].getName() << endl;
         }
         //myfile << plan << endl;
         myfile.close();
@@ -254,12 +270,12 @@ Vector2d FootstepPlanner::_getNextRandomPoint(FootLocation* lastFootNode)
 /// \param flNewStart
 /// \return
 ///
-bool FootstepPlanner::_getRandomFootLocation(const vector<Foot> feet, vector<FootConstraint> constraints, vector<Line> obstacles, FootLocation flNearestNeighbor, FootLocation* flNewStart)
+bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints, vector<Line> obstacles, FootLocation flNearestNeighbor, FootLocation* flNewStart)
 {
     // Determine the next foot in our step sequence (Left -> Right or Right -> Left)
     int previousFootIndex = flNearestNeighbor.getFootIndex();
     int nextFootIndex = (previousFootIndex + 1);
-    nextFootIndex = nextFootIndex % feet.size();
+    nextFootIndex = nextFootIndex % _Feet.size();
 
     FootLocation* flFootConfig;
     int iteration = 0;

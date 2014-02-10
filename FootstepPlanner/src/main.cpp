@@ -103,9 +103,10 @@ int main()
     obs.push_back(Line(Vector2d(10.0d, -17.0d), Vector2d(20.0d, -7.0d)));
 
     // Initialize the planner
-    FootstepPlanner planner;
+    FootstepPlanner planner(FEET);
     vector<FootLocation> plan = planner.getStaticPlan();
-    //vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, FEET, constraints, currentLoc, goalLoc, obs);
+    //vector<FootLocation> plan2 = planner.generatePlan(PLANNER_TYPE_RRT, constraints, currentLoc, goalLoc, obs);
+    //vector<FootLocation> plan3 = planner.generatePlan(PLANNER_TYPE_R_STAR, constraints, currentLoc, goalLoc, obs);
     visualizePlanUsingTransform(currentLoc, goalLoc, obs, plan);
     //visualizePlan(currentLoc, goalLoc, obs, plan);
     return 0;

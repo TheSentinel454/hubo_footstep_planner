@@ -65,41 +65,38 @@ namespace fsp {
 ///
 const int PLANNER_TYPE_RRT = 0;
 ///
-/// \brief PLANNER_TYPE_A_STAR
-///
-const int PLANNER_TYPE_A_STAR = 1;
-///
 /// \brief PLANNER_TYPE_R_STAR
 ///
-const int PLANNER_TYPE_R_STAR = 2;
-///
-/// \brief PLANNER_TYPE_ARA_STAR
-///
-const int PLANNER_TYPE_ARA_STAR = 3;
+const int PLANNER_TYPE_R_STAR = 1;
 
 /*!
   * \class Footstep Planner
-  * \brief Footstep planner is in charge of taking in set of parameters, and calculating a plan based on those parameters.
+  * \brief Footstep planner is in charge of taking in a set of parameters, and calculating a plan based on those parameters.
   *
   *
   */
 class FootstepPlanner
 {
     public:
-        FootstepPlanner();
+        FootstepPlanner(std::vector<Foot> feet);
 
-        std::vector<FootLocation> generatePlan(int plannerType, const std::vector<Foot> feet, std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
+        std::vector<FootLocation> generatePlan(int plannerType, std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
         std::vector<FootLocation> getStaticPlan();
 
-        std::vector<FootLocation> runRRTPlanner(const std::vector<Foot> feet, std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
-
+        std::vector<FootLocation> runRRTPlanner(std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
+        std::vector<FootLocation> runRStarPlanner(std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
     protected:
 
     private:
-        void _writePlannerOutput(double time, const std::vector<Foot> feet, std::vector<FootLocation> plan);
+        ///
+        /// \brief _writePlannerOutput
+        /// \param time
+        /// \param plan
+        ///
+        void _writePlannerOutput(double time, std::vector<FootLocation> plan);
         Eigen::Vector2d _getNextRandomPoint(FootLocation* lastFootNode);
         Eigen::Vector2d _getRandomLocation();
-        bool _getRandomFootLocation(const std::vector<Foot> feet, std::vector<FootConstraint> constraints, std::vector<Line> obstacles, FootLocation flNearestNeighbor, FootLocation* flNewStart);
+        bool _getRandomFootLocation(std::vector<FootConstraint> constraints, std::vector<Line> obstacles, FootLocation flNearestNeighbor, FootLocation* flNewStart);
         Eigen::Vector2d _findNearestNeighbor(Eigen::Vector2d location, flann::Index< flann::L2<double> > points);
         FootLocation _findFootLocation(Eigen::Vector2d location, fsp::FootLocationNode root);
         bool _isCollision(fsp::FootLocation flFootConfig, fsp::FootLocation flNearestNeighbor, std::vector<Line> obstacles);
@@ -109,6 +106,7 @@ class FootstepPlanner
         double _maximumRandomX;
         double _minimumRandomY;
         double _maximumRandomY;
+        std::vector<Foot> _Feet;
 };
 
 } // namespace fsp
