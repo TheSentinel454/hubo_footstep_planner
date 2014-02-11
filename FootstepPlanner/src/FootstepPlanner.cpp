@@ -131,7 +131,15 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
     flann::Index< flann::L2<double> > goalRRT(goalState, flann::KDTreeIndexParams(4));
     goalRRT.buildIndex();
 
-    FootLocationNode footLocationRoot;
+    FootLocationNode startFootLocationRoot(currentLocation[0]);
+    startFootLocationRoot.setParent(NULL);
+    for(int i = 1; i < currentLocation.size(); i++)
+        startFootLocationRoot.addChild(currentLocation[i]);
+
+    FootLocationNode goalFootLocationRoot(goalLocation[0]);
+    goalFootLocationRoot.setParent(NULL);
+    for(int i = 1; i < goalLocation.size(); i++)
+        goalFootLocationRoot.addChild(goalLocation[i]);
 
     FootLocation* lastStartNode = &currentLocation[0];
     FootLocation* lastGoalNode = &goalLocation[0];
@@ -143,17 +151,25 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
         // We are going to flip a coin to see if we use the goal RRT's
         // latest point, or we use a randomly generated point
         Vector2d vRand = _getNextRandomPoint(lastGoalNode);
+        cout << "Random Point(S): " << vRand << endl;
 
         // Find the nearest neighbor in the start RRT
         Vector2d vNearestNeighbor = _findNearestNeighbor(vRand, startRRT);
+        cout << "Nearest Neighbor(S): " << vNearestNeighbor << endl;
 
         // Find the corresponding Foot Location object
-        FootLocation flNearestNeighbor = _findFootLocation(vNearestNeighbor, footLocationRoot);
+        FootLocation flNearestNeighbor = _findFootLocation(vNearestNeighbor, startFootLocationRoot);
+        cout << "Corresponding FootLocation: "
+             << flNearestNeighbor.getLocation()
+             << "," << flNearestNeighbor.getTheta()
+             << "," << flNearestNeighbor.getFootIndex()
+             << endl;
 
         // Randomly generate foot location configuration (Collision detection is done when generating the foot)
         FootLocation* flNewStart;
         if (_getRandomFootLocation(constraints, obstacles, flNearestNeighbor, vRand, flNewStart))
         {
+            cout << "Found valid Foot Location(S): " << (*flNewStart).getLocation() << endl;
             // Add to the start RRT
             flann::Matrix<double> mNewPoint(new double[1 * 2], 1, 2);
             mNewPoint[0][0] = (*flNewStart).getLocation()[0];   // x coordinate of new point
@@ -257,10 +273,16 @@ Vector2d FootstepPlanner::_getNextRandomPoint(FootLocation* lastFootNode)
     // Flip coin
     // If true we use the last foot node location
     if ((rand() % 100) >= 50)
+    {
+        cout << "Selecting last foot node as Random Point" << endl;
         return (*lastFootNode).getLocation();
+    }
     // If false, we use a randomly selected location
     else
+    {
+        cout << "Selecting random location as Random Point" << endl;
         return _getRandomLocation();
+    }
 }
 
 ///
@@ -276,6 +298,7 @@ bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints,
     int previousFootIndex = flNearestNeighbor.getFootIndex();
     int nextFootIndex = (previousFootIndex + 1);
     nextFootIndex = nextFootIndex % _Feet.size();
+    cout << "Previous Foot Index: " << previousFootIndex << " Next Foot Index: " << nextFootIndex << endl;
 
     FootLocation* flFootConfig;
     int iteration = 0;
@@ -283,12 +306,17 @@ bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints,
     while(_generateRandomFootConfig(previousFootIndex, nextFootIndex, flFootConfig, constraints, flNearestNeighbor, randomPoint) &&
           iteration < 50)
     {
+        cout << "Random Foot Config Success: " << iteration << endl;
         // Check for collision
         if (_isCollision(*flFootConfig, flNearestNeighbor, obstacles))
+        {
+            cout << "Collision!" << endl;
             iteration++;
+        }
         // No collision
         else
         {
+            cout << "No collision!" << endl;
             // Initialize the new footlocation
             flNewStart = flFootConfig;
             // Good to go

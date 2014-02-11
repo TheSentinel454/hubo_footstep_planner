@@ -68,6 +68,11 @@ class FootLocationNode
         Eigen::Vector2d getLocation() const;
         float getTheta() const;
         int getFootIndex() const;
+        std::vector<FootLocationNode*> getChildren() const;
+        FootLocationNode* getChild(int index) const;
+        void setParent(FootLocationNode* parent);
+        void addChild(FootLocationNode* child);
+        void addChild(FootLocation child);
     protected:
 
     private:

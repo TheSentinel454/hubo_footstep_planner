@@ -45,23 +45,50 @@
 #include "FootLocationNode.h"
 
 using namespace fsp;
+using namespace std;
+using namespace Eigen;
 
 FootLocationNode::FootLocationNode(){}
 
-FootLocationNode::FootLocationNode(fsp::FootLocation location)
+FootLocationNode::FootLocationNode(FootLocation location)
 {
     _Location = location.getLocation();
     _Theta = location.getTheta();
     _FootIndex = location.getFootIndex();
 }
 
-FootLocationNode::FootLocationNode(Eigen::Vector2d location, float theta, int footIndex)
+FootLocationNode::FootLocationNode(Vector2d location, float theta, int footIndex)
 {
     _Location = location;
     _Theta = theta;
     _FootIndex = footIndex;
 }
 
-Eigen::Vector2d FootLocationNode::getLocation() const { return _Location; }
+Vector2d FootLocationNode::getLocation() const { return _Location; }
 float FootLocationNode::getTheta() const { return _Theta; }
 int FootLocationNode::getFootIndex() const { return _FootIndex; }
+vector<FootLocationNode*> FootLocationNode::getChildren() const { return _Children; }
+
+FootLocationNode* FootLocationNode::getChild(int index) const
+{
+    if (_Children.size() > index)
+        return _Children[index];
+    else
+        return NULL;
+}
+
+void FootLocationNode::setParent(FootLocationNode* parent)
+{
+    _Parent = parent;
+}
+
+void FootLocationNode::addChild(FootLocationNode* child)
+{
+    _Children.push_back(child);
+}
+
+void FootLocationNode::addChild(FootLocation child)
+{
+    FootLocationNode node(child);
+    _Children.push_back(&node);
+}
