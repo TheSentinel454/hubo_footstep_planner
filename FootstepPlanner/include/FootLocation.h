@@ -46,6 +46,12 @@
 #define FOOTLOCATION_H
 
 #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
+#include <iostream>
+#include <vector>
+
+#include "Line.h"
+#include "Foot.h"
 
 namespace fsp {
 
@@ -58,17 +64,20 @@ namespace fsp {
 class FootLocation
 {
     public:
-        FootLocation(Eigen::Vector2d location, float theta, int footIndex);
+        FootLocation(Eigen::Vector2d location, float theta, int footIndex, std::vector<fsp::Foot>* feet);
 
         Eigen::Vector2d getLocation() const;
         float getTheta() const;
         int getFootIndex() const;
+        std::vector<fsp::Line> getBounds() const;
+        bool isCollision(fsp::FootLocation location);
     protected:
 
     private:
         Eigen::Vector2d _Location;
         float _Theta;
         int _FootIndex;
+        std::vector<Line> _Bounds;
     };
 } // namespace fsp
 

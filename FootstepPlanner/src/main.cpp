@@ -42,19 +42,7 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <osg/Geode>
-#include <osg/Geometry>
-#include <osg/PositionAttitudeTransform>
-#include <osg/ShapeDrawable>
-#include <osg/LineSegment>
-#include <osgViewer/Viewer>
-#include <osg/LineWidth>
-#include <osg/MatrixTransform>
-
-#include <iostream>
-
 #include "main.h"
-#include "FootstepPlanner.h"
 
 using namespace std;
 using namespace osg;
@@ -82,13 +70,13 @@ int main()
 
     // Initialize the current location
     vector<FootLocation> currentLoc;
-    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, 0));
-    currentLoc.push_back(FootLocation(Vector2d(0.0d, 0.0d), 0.0f, 1));
+    currentLoc.push_back(FootLocation(Vector2d(0.0d, 3.0d), 0.0f, 0, &FEET));
+    currentLoc.push_back(FootLocation(Vector2d(0.0d, 0.0d), 0.0f, 1, &FEET));
 
     // Initialize the goal location
     vector<FootLocation> goalLoc;
-    goalLoc.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, 0));
-    goalLoc.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, 1));
+    goalLoc.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, 0, &FEET));
+    goalLoc.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, 1, &FEET));
 
     // Initialize the obstacles
     vector<Line> obs;
@@ -112,21 +100,22 @@ int main()
     return 0;
 }
 
-osg::PositionAttitudeTransform* getBoxObstacle(Vec3 center, float lengthX, float lengthY, float lengthZ, float theta) {
+osg::PositionAttitudeTransform* getBoxObstacle(Vec3 center, float lengthX, float lengthY, float lengthZ, float theta)
+{
     Geode* boxGeode = new Geode(); 
-		
-		osg::Box* boxPointer = new osg::Box(center, lengthX, lengthY, lengthZ);
-		osg::ShapeDrawable* boxShape = new osg::ShapeDrawable(boxPointer);
-		boxGeode->addDrawable(boxShape);
+
+    osg::Box* boxPointer = new osg::Box(center, lengthX, lengthY, lengthZ);
+    osg::ShapeDrawable* boxShape = new osg::ShapeDrawable(boxPointer);
+    boxGeode->addDrawable(boxShape);
 
     osg::PositionAttitudeTransform* boxTransform = new osg::PositionAttitudeTransform();
-		boxTransform->addChild(boxGeode);
-		
-		osg::Vec3 boxPosition(0, 0, 0);
+    boxTransform->addChild(boxGeode);
+
+    osg::Vec3 boxPosition(0, 0, 0);
     boxTransform->setPosition(boxPosition);
     boxTransform->setAttitude(osg::Quat(osg::DegreesToRadians(theta), osg::Vec3(0, 0, 1)));
 
-		return boxTransform;
+    return boxTransform;
 }
 
 ///
@@ -178,7 +167,6 @@ PositionAttitudeTransform* getFootTransform(FootLocation location, Vec4 color)
 
     return footTransform;
 }
- 
 
 ///
 /// \fn visualizePlan

@@ -46,8 +46,9 @@
 #define FOOTLOCATIONNODE_H
 
 #include <eigen3/Eigen/Core>
-#include "FootLocation.h"
 #include <vector>
+
+#include "FootLocation.h"
 
 namespace fsp {
 

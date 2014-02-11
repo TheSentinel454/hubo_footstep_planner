@@ -52,9 +52,9 @@ using namespace flann;
 ///
 /// \brief FootstepPlanner::FootstepPlanner
 ///
-FootstepPlanner::FootstepPlanner(vector<Foot> feet)
+FootstepPlanner::FootstepPlanner(vector<Foot> ft)
 {
-    _Feet = feet;
+    _Feet = ft;
 }
 
 ///
@@ -152,7 +152,7 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
 
         // Randomly generate foot location configuration (Collision detection is done when generating the foot)
         FootLocation* flNewStart;
-        if (_getRandomFootLocation(constraints, obstacles, flNearestNeighbor, flNewStart))
+        if (_getRandomFootLocation(constraints, obstacles, flNearestNeighbor, vRand, flNewStart))
         {
             // Add to the start RRT
             flann::Matrix<double> mNewPoint(new double[1 * 2], 1, 2);
@@ -205,18 +205,18 @@ vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> con
 vector<FootLocation> FootstepPlanner::getStaticPlan()
 {
     vector<FootLocation> plan;
-    plan.push_back(FootLocation(Vector2d(5.0d, 3.0d), 0.0f, 0));
-    plan.push_back(FootLocation(Vector2d(10.0d, 0.0d), 0.0f, 1));
-    plan.push_back(FootLocation(Vector2d(16.0d, 3.0d), 0.0f, 0));
-    plan.push_back(FootLocation(Vector2d(22.0d, 0.0d), 0.0f, 1));
-    plan.push_back(FootLocation(Vector2d(29.0d, 3.0d), 0.0f, 0));
-    plan.push_back(FootLocation(Vector2d(36.0d, 0.0d), 0.0f, 1));
-    plan.push_back(FootLocation(Vector2d(43.0d, 3.0d), 0.0f, 0));
-    plan.push_back(FootLocation(Vector2d(50.0d, 0.0d), 0.0f, 1));
-    plan.push_back(FootLocation(Vector2d(57.0d, 3.0d), 0.0f, 0));
-    plan.push_back(FootLocation(Vector2d(62.0d, 0.0d), 0.0f, 1));
-    plan.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, 0));
-    plan.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, 1));
+    plan.push_back(FootLocation(Vector2d(5.0d, 3.0d), 0.0f, 0, &_Feet));
+    plan.push_back(FootLocation(Vector2d(10.0d, 0.0d), 0.0f, 1, &_Feet));
+    plan.push_back(FootLocation(Vector2d(16.0d, 3.0d), 0.0f, 0, &_Feet));
+    plan.push_back(FootLocation(Vector2d(22.0d, 0.0d), 0.0f, 1, &_Feet));
+    plan.push_back(FootLocation(Vector2d(29.0d, 3.0d), 0.0f, 0, &_Feet));
+    plan.push_back(FootLocation(Vector2d(36.0d, 0.0d), 0.0f, 1, &_Feet));
+    plan.push_back(FootLocation(Vector2d(43.0d, 3.0d), 0.0f, 0, &_Feet));
+    plan.push_back(FootLocation(Vector2d(50.0d, 0.0d), 0.0f, 1, &_Feet));
+    plan.push_back(FootLocation(Vector2d(57.0d, 3.0d), 0.0f, 0, &_Feet));
+    plan.push_back(FootLocation(Vector2d(62.0d, 0.0d), 0.0f, 1, &_Feet));
+    plan.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, 0, &_Feet));
+    plan.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, 1, &_Feet));
 
     return plan;
 }
@@ -270,7 +270,7 @@ Vector2d FootstepPlanner::_getNextRandomPoint(FootLocation* lastFootNode)
 /// \param flNewStart
 /// \return
 ///
-bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints, vector<Line> obstacles, FootLocation flNearestNeighbor, FootLocation* flNewStart)
+bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints, vector<Line> obstacles, FootLocation flNearestNeighbor, Vector2d randomPoint, FootLocation* flNewStart)
 {
     // Determine the next foot in our step sequence (Left -> Right or Right -> Left)
     int previousFootIndex = flNearestNeighbor.getFootIndex();
@@ -280,7 +280,7 @@ bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints,
     FootLocation* flFootConfig;
     int iteration = 0;
     // Randomly generate valid foot configuration
-    while(_generateRandomFootConfig(previousFootIndex, nextFootIndex, flFootConfig, constraints, flNearestNeighbor) &&
+    while(_generateRandomFootConfig(previousFootIndex, nextFootIndex, flFootConfig, constraints, flNearestNeighbor, randomPoint) &&
           iteration < 50)
     {
         // Check for collision
@@ -329,8 +329,27 @@ void FootstepPlanner::_updateRandomMinMaxValues(double xValue, double yValue)
 /// \param flNearestNeighbor
 /// \return
 ///
-bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextFootIndex, FootLocation* flFootConfig, vector<FootConstraint> constraints, FootLocation flNearestNeighbor)
+bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextFootIndex, FootLocation* flFootConfig, vector<FootConstraint> constraints, FootLocation flNearestNeighbor, Vector2d randomPoint)
 {
+    // Find the corresponding constraint
+    FootConstraint* fc;
+    for(int i = 0; i < constraints.size(); i++)
+    {
+        // Look for the constraint that corresponds to the next foot
+        // and that references the previous foot
+        if (constraints[i].getFootIndex() == nextFootIndex &&
+            constraints[i].getRefFootIndex() == previousFootIndex)
+            // Save the pointer to that constraint
+            fc = &constraints[i];
+    }
+    // Get the previous foot location so we know where to start from
+    Vector2d minPoint(flNearestNeighbor.getLocation()[0] + (*fc).getMinimumDeltaX(),
+                      flNearestNeighbor.getLocation()[1] + (*fc).getMinimumDeltaY());
+    // Generate a random X in the valid range (bias towards randomPoint)
+
+    // Generate a random Y in the valid range (bias towards randomPoint)
+
+    // Generate a random Theta in the valid range
 
     return true;
 }
@@ -344,6 +363,27 @@ bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextF
 ///
 bool FootstepPlanner::_isCollision(FootLocation flFootConfig, FootLocation flNearestNeighbor, vector<Line> obstacles)
 {
+    // Check for collision with nearest neighbor
+    if (flFootConfig.isCollision(flNearestNeighbor))
+        // Collision
+        return true;
+    // No collision with nearest neighbor
+    else
+    {
+        // Iterate through each of the foot bounds
+        for(int i = 0; i < flFootConfig.getBounds().size(); i++)
+        {
+            // Iterate through each of the obstacle lines
+            for(int j = 0; j < obstacles.size(); j++)
+            {
+                // Check for collision with the obstacle
+                if (flFootConfig.getBounds()[i].isCollision(obstacles[j]))
+                    // Collision
+                    return true;
+            }
+        }
+    }
+    // No collision
     return false;
 }
 
@@ -353,8 +393,7 @@ bool FootstepPlanner::_isCollision(FootLocation flFootConfig, FootLocation flNea
 ///
 Vector2d FootstepPlanner::_getRandomLocation()
 {
-    //double f = (double)rand() / RAND_MAX;
-    //return fMin + f * (fMax - fMin);
+    // Randomize a value from min to max
     return Vector2d(_minimumRandomX + (((double)rand() / RAND_MAX) * (_maximumRandomX - _minimumRandomX)),
                     _minimumRandomY + (((double)rand() / RAND_MAX) * (_maximumRandomY - _minimumRandomY)));
 }
@@ -390,6 +429,6 @@ Vector2d FootstepPlanner::_findNearestNeighbor(Vector2d location, flann::Index< 
 ///
 FootLocation FootstepPlanner::_findFootLocation(Vector2d location, FootLocationNode root)
 {
-
+    // TODO: Add finding of the foot location based on the location specified in
+    // the nearest neighbor tree
 }
-

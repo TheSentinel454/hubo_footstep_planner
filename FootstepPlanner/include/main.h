@@ -45,10 +45,21 @@
 #ifndef MAIN_H
 #define MAIN_H
 
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osg/PositionAttitudeTransform>
+#include <osg/ShapeDrawable>
+#include <osg/LineSegment>
+#include <osgViewer/Viewer>
+#include <osg/LineWidth>
+#include <osg/MatrixTransform>
+#include <iostream>
+
 #include "FootLocation.h"
 #include "Line.h"
 #include "Foot.h"
 #include "FootConstraint.h"
+#include "FootstepPlanner.h"
 
 using namespace fsp;
 using namespace std;
@@ -57,5 +68,4 @@ void visualizePlan(vector<FootLocation>, vector<FootLocation>, vector<Line>, vec
 void visualizePlanUsingTransform(vector<FootLocation>, vector<FootLocation>, vector<Line>, vector<FootLocation>);
 
 std::vector<Foot> FEET;
-
 #endif

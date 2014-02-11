@@ -45,14 +45,84 @@
 #include "FootLocation.h"
 
 using namespace fsp;
+using namespace Eigen;
+using namespace std;
 
-FootLocation::FootLocation(Eigen::Vector2d location, float theta, int footIndex)
+///
+/// \brief FootLocation::FootLocation
+/// \param location
+/// \param theta
+/// \param footIndex
+/// \param feet
+///
+FootLocation::FootLocation(Vector2d location, float theta, int footIndex, vector<Foot>* feet)
 {
     _Location = location;
     _Theta = theta;
     _FootIndex = footIndex;
+    float yOffset = (*feet)[footIndex].getWidth() / 2;
+    float xOffset = (*feet)[footIndex].getLength() / 2;
+
+    // Set a point of 2,1
+    Vector2d p1(xOffset, yOffset);
+    Vector2d p2(-xOffset, yOffset);
+    Vector2d p3(-xOffset, -yOffset);
+    Vector2d p4(xOffset, -yOffset);
+    // Calculate the Transformation
+    Transform<double,2,Affine> t0 = Translation<double,2>(location) *
+                                    Rotation2Dd(theta * (M_PI / 180.0d));
+    // Calculate the bound points
+    p1 = (t0.linear() * p1) + t0.translation();
+    p2 = (t0.linear() * p2) + t0.translation();
+    p3 = (t0.linear() * p3) + t0.translation();
+    p4 = (t0.linear() * p4) + t0.translation();
+    // Add the bounds for the foot
+    _Bounds.push_back(Line(p1, p2));
+    _Bounds.push_back(Line(p2, p3));
+    _Bounds.push_back(Line(p3, p4));
+    _Bounds.push_back(Line(p4, p1));
 }
 
-Eigen::Vector2d FootLocation::getLocation() const { return _Location; }
+///
+/// \brief FootLocation::isCollision
+/// \param location
+/// \return
+///
+bool FootLocation::isCollision(fsp::FootLocation location)
+{
+    // Iterate across this object's bounds
+    for(int i = 0; i < _Bounds.size(); i++)
+    {
+        // Iterate across the passed in object's bounds
+        for(int j = 0; j < location.getBounds().size(); j++)
+        {
+            // Check for collision
+            if (_Bounds[i].isCollision(location.getBounds()[j]))
+                // Collision
+                return true;
+        }
+    }
+    // No collision
+    return false;
+}
+
+///
+/// \brief FootLocation::getLocation
+/// \return
+///
+Vector2d FootLocation::getLocation() const { return _Location; }
+///
+/// \brief FootLocation::getTheta
+/// \return
+///
 float FootLocation::getTheta() const { return _Theta; }
+///
+/// \brief FootLocation::getFootIndex
+/// \return
+///
 int FootLocation::getFootIndex() const { return _FootIndex; }
+///
+/// \brief FootLocation::getBounds
+/// \return
+///
+vector<Line> FootLocation::getBounds() const { return _Bounds; }
