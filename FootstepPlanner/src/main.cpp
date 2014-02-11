@@ -119,6 +119,48 @@ osg::PositionAttitudeTransform* getBoxObstacle(Vec3 center, float lengthX, float
 }
 
 ///
+/// \fn getObstacle
+/// \brief Get the obstacle geode.. 
+/// \param vector containing all the lines as we got them. 
+Geode* getObstacle(vector<Line> obstacles) {
+    // Add the obstacles (red)
+    Vec4 red = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    Geode* obstacleGeode = new Geode();
+    Geometry* obstacleGeometry = new Geometry();
+    Vec4Array* obstacleColors = new Vec4Array;
+    obstacleColors->push_back(red);
+
+    Vec3Array* obstacleVertices = new Vec3Array;
+    for(int i = 0; i < obstacles.size(); i++)
+    {
+        Line line = obstacles[i];
+        Vector2d start = line.getStart();
+        Vector2d end = line.getEnd();
+        obstacleVertices->push_back(Vec3(start[0], start[1], 0));
+        obstacleVertices->push_back(Vec3(end[0], end[1], 0));
+        obstacleVertices->push_back(Vec3(end[0], end[1], 5));
+        obstacleVertices->push_back(Vec3(start[0], start[1], 5));
+    }
+    // Set the Vertex array
+    obstacleGeometry->setVertexArray(obstacleVertices);
+    for(int i = 0, j = 0; i < obstacles.size(); i++, j+=4)
+    {
+        // Add foot
+        DrawElementsUInt* obstacle = new DrawElementsUInt(PrimitiveSet::QUADS, 0);
+        obstacle->push_back(j + 0);
+        obstacle->push_back(j + 1);
+        obstacle->push_back(j + 2);
+        obstacle->push_back(j + 3);
+        obstacleGeometry->addPrimitiveSet(obstacle);
+        obstacleColors->push_back(red);
+    }
+    obstacleGeometry->setColorArray(obstacleColors);
+    obstacleGeometry->setColorBinding(Geometry::BIND_PER_PRIMITIVE_SET);
+    obstacleGeode->addDrawable(obstacleGeometry);
+		return obstacleGeode;
+}
+
+///
 /// \brief getFootTransform - Function to get the transform for each of the foot.
 /// \param location - To get the location/orientation of the transform to be generated.
 /// \param color - To signify the color of the transform to be generated.
@@ -202,7 +244,8 @@ void visualizePlanUsingTransform(vector<FootLocation> currentLocation, vector<Fo
     }
 
     // Add the obstacles (red)
-    root->addChild(getBoxObstacle(Vec3(30.0, 20.0, 1.25), 60.0, 20.0, 2.5, 0.0));
+    //root->addChild(getBoxObstacle(Vec3(30.0, 20.0, 1.25), 60.0, 20.0, 2.5, 0.0));
+    root->addChild(getObstacle(obstacles));
 
     // Add the steps (yellow)
     for(int i = 0; i < plan.size(); i++)
