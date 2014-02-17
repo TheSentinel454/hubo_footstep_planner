@@ -79,9 +79,9 @@ class FootstepPlanVisualizer
     protected:
 
     private:
-        osg::PositionAttitudeTransform* getBoxObstacle(osg::Vec3 center, float lengthX, float lengthY, float lengthZ, float theta);
-        osg::Geode* getObstacle(std::vector<fsp::Line> obstacles);
-        osg::PositionAttitudeTransform* getFootTransform(fsp::FootLocation location, osg::Vec4 color);
+        osg::PositionAttitudeTransform* _getBoxObstacle(osg::Vec3 center, float lengthX, float lengthY, float lengthZ, float theta);
+        osg::Geode* _getObstacle(std::vector<fsp::Line> obstacles);
+        osg::PositionAttitudeTransform* _getFootTransform(fsp::FootLocation location, osg::Vec4 color);
         std::vector<Foot> _Feet;
     };
 } // namespace fsp
