@@ -42,16 +42,48 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef MAIN_H
-#define MAIN_H
-#include <iostream>
+#ifndef FOOTSTEPPLANVISUALIZER_H
+#define FOOTSTEPPLANVISUALIZER_H
+
+#include <osg/Geode>
+#include <osg/Geometry>
+#include <osg/PositionAttitudeTransform>
+#include <osg/ShapeDrawable>
+#include <osg/LineSegment>
+#include <osgViewer/Viewer>
+#include <osg/LineWidth>
+#include <osg/MatrixTransform>
+
+#include <eigen3/Eigen/Core>
 
 #include "FootLocation.h"
-#include "Line.h"
 #include "Foot.h"
-#include "FootConstraint.h"
-#include "FootstepPlanner.h"
-#include "FootstepPlanVisualizer.h"
+#include "Line.h"
 
-std::vector<fsp::Foot> FEET;
+namespace fsp {
+
+/*!
+  * \class FootstepPlanVisualizer
+  * \brief A Footstep Plan Visualizer helps in visualizing a footstep plan
+  *
+  *
+  */
+class FootstepPlanVisualizer
+{
+    public:
+        FootstepPlanVisualizer(std::vector<fsp::Foot> ft);
+
+        void visualizePlan(std::vector<fsp::FootLocation>, std::vector<fsp::FootLocation>, std::vector<fsp::Line>, std::vector<fsp::FootLocation>);
+        void visualizePlanUsingTransform(std::vector<fsp::FootLocation>, std::vector<fsp::FootLocation>, std::vector<fsp::Line>, std::vector<fsp::FootLocation>);
+
+    protected:
+
+    private:
+        osg::PositionAttitudeTransform* getBoxObstacle(osg::Vec3 center, float lengthX, float lengthY, float lengthZ, float theta);
+        osg::Geode* getObstacle(std::vector<fsp::Line> obstacles);
+        osg::PositionAttitudeTransform* getFootTransform(fsp::FootLocation location, osg::Vec4 color);
+        std::vector<Foot> _Feet;
+    };
+} // namespace fsp
+
 #endif
