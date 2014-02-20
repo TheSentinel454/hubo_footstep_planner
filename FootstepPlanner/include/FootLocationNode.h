@@ -62,23 +62,24 @@ class FootLocationNode
 {
     public:
         FootLocationNode();
-        FootLocationNode(fsp::FootLocation location);
-        FootLocationNode(Eigen::Vector2d location, float theta, int footIndex);
+        FootLocationNode(fsp::FootLocation& location, std::vector<Foot>* feet);
+        FootLocationNode(Eigen::Vector2d location, float theta, int footIndex, std::vector<Foot>* feet);
+        ~FootLocationNode();
 
+        FootLocation getFootLocation() const;
         Eigen::Vector2d getLocation() const;
         float getTheta() const;
         int getFootIndex() const;
+        std::vector<Line> getBounds() const;
         std::vector<FootLocationNode*> getChildren() const;
         FootLocationNode* getChild(int index) const;
         void setParent(FootLocationNode* parent);
         void addChild(FootLocationNode* child);
-        void addChild(FootLocation child);
+        void addChild(FootLocation& child, std::vector<Foot>* feet);
     protected:
 
     private:
-        Eigen::Vector2d _Location;
-        float _Theta;
-        int _FootIndex;
+        fsp::FootLocation _Location;
         FootLocationNode* _Parent;
         std::vector<FootLocationNode*> _Children;
     };

@@ -131,15 +131,15 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
     flann::Index< flann::L2<double> > goalRRT(goalState, flann::KDTreeIndexParams(4));
     goalRRT.buildIndex();
 
-    FootLocationNode startFootLocationRoot(currentLocation[0]);
+    FootLocationNode startFootLocationRoot(currentLocation[0], &_Feet);
     startFootLocationRoot.setParent(NULL);
     for(int i = 1; i < currentLocation.size(); i++)
-        startFootLocationRoot.addChild(currentLocation[i]);
+        startFootLocationRoot.addChild(currentLocation[i], &_Feet);
 
-    FootLocationNode goalFootLocationRoot(goalLocation[0]);
+    FootLocationNode goalFootLocationRoot(goalLocation[0], &_Feet);
     goalFootLocationRoot.setParent(NULL);
     for(int i = 1; i < goalLocation.size(); i++)
-        goalFootLocationRoot.addChild(goalLocation[i]);
+        goalFootLocationRoot.addChild(goalLocation[i], &_Feet);
 
     FootLocation* lastStartNode = &currentLocation[0];
     FootLocation* lastGoalNode = &goalLocation[0];
@@ -151,33 +151,34 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
         // We are going to flip a coin to see if we use the goal RRT's
         // latest point, or we use a randomly generated point
         Vector2d vRand = _getNextRandomPoint(lastGoalNode);
-        cout << "Random Point(S): " << vRand << endl;
+        cout << "Random Point(S): " << endl << vRand << endl;
 
         // Find the nearest neighbor in the start RRT
         Vector2d vNearestNeighbor = _findNearestNeighbor(vRand, startRRT);
-        cout << "Nearest Neighbor(S): " << vNearestNeighbor << endl;
+        cout << "Nearest Neighbor(S): " << endl << vNearestNeighbor << endl;
 
-        // Find the corresponding Foot Location object
-        FootLocation flNearestNeighbor = _findFootLocation(vNearestNeighbor, startFootLocationRoot);
-        cout << "Corresponding FootLocation: "
-             << flNearestNeighbor.getLocation()
-             << "," << flNearestNeighbor.getTheta()
-             << "," << flNearestNeighbor.getFootIndex()
-             << endl;
+        // Find the corresponding Foot Location Node
+        FootLocationNode* flnNearestNeighbor = _findFootLocationNode(vNearestNeighbor, &startFootLocationRoot);
+        cout << "Corresponding FootLocationNode: " << endl
+             << flnNearestNeighbor->getLocation() << endl
+             << flnNearestNeighbor->getTheta() << " degrees" << endl
+             << flnNearestNeighbor->getFootIndex() << endl;
 
         // Randomly generate foot location configuration (Collision detection is done when generating the foot)
         FootLocation* flNewStart;
-        if (_getRandomFootLocation(constraints, obstacles, flNearestNeighbor, vRand, flNewStart))
+        if (_getRandomFootLocation(constraints, obstacles, flnNearestNeighbor->getFootLocation(), vRand, flNewStart))
         {
             cout << "Found valid Foot Location(S): " << (*flNewStart).getLocation() << endl;
             // Add to the start RRT
             flann::Matrix<double> mNewPoint(new double[1 * 2], 1, 2);
-            mNewPoint[0][0] = (*flNewStart).getLocation()[0];   // x coordinate of new point
-            mNewPoint[0][1] = (*flNewStart).getLocation()[1];   // y coordinate of new point
+            mNewPoint[0][0] = flNewStart->getLocation()[0];   // X coordinate of new point
+            mNewPoint[0][1] = flNewStart->getLocation()[1];   // Y coordinate of new point
             startRRT.addPoints(mNewPoint);
 
             // Save the last Start Node
             lastStartNode = flNewStart;
+            // Add the new foot location node to the tree
+            flnNearestNeighbor->addChild((*flNewStart), &_Feet);
         }
 
         // Now let's grow the goal RRT
@@ -371,8 +372,8 @@ bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextF
             fc = &constraints[i];
     }
     // Get the previous foot location so we know where to start from
-    Vector2d minPoint(flNearestNeighbor.getLocation()[0] + (*fc).getMinimumDeltaX(),
-                      flNearestNeighbor.getLocation()[1] + (*fc).getMinimumDeltaY());
+    Vector2d minPoint(flNearestNeighbor.getLocation()[0] + fc->getMinimumDeltaX(),
+                      flNearestNeighbor.getLocation()[1] + fc->getMinimumDeltaY());
     // Generate a random X in the valid range (bias towards randomPoint)
 
     // Generate a random Y in the valid range (bias towards randomPoint)
@@ -455,8 +456,40 @@ Vector2d FootstepPlanner::_findNearestNeighbor(Vector2d location, flann::Index< 
 /// \param root
 /// \return
 ///
-FootLocation FootstepPlanner::_findFootLocation(Vector2d location, FootLocationNode root)
+FootLocationNode* FootstepPlanner::_findFootLocationNode(Vector2d location, FootLocationNode* root)
 {
+    FootLocationNode* node;
     // TODO: Add finding of the foot location based on the location specified in
     // the nearest neighbor tree
+    // Check for a valid value
+    if (root != NULL)
+    {
+        cout << "Checking Location: " << endl << location << endl
+             << "Against: " << endl << root->getLocation() << endl;
+        // Check for a match on the root
+        if (location[0] == root->getLocation()[0] &&
+            location[1] == root->getLocation()[1])
+            // Return the root node
+            return root;
+        // No match
+        else
+        {
+            // Let's search the children
+            for(int i = 0; i < root->getChildren().size(); i++)
+            {
+                // Recursively call to find the foot location
+                node = _findFootLocationNode(location, root->getChild(i));
+                // See if we found a match
+                if (node != NULL)
+                    // Return the match
+                    return node;
+            }
+            // No match across all children
+            return NULL;
+        }
+    }
+    // No valid root
+    else
+        // No valid match
+        return NULL;
 }

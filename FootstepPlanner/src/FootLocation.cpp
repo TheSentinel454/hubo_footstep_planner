@@ -50,6 +50,16 @@ using namespace std;
 
 ///
 /// \brief FootLocation::FootLocation
+///
+FootLocation::FootLocation()
+{
+    _Location = Vector2d(0.0d, 0.0d);
+    _Theta = 0.0f;
+    _FootIndex = -1;
+}
+
+///
+/// \brief FootLocation::FootLocation
 /// \param location
 /// \param theta
 /// \param footIndex

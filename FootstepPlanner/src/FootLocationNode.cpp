@@ -50,23 +50,27 @@ using namespace Eigen;
 
 FootLocationNode::FootLocationNode(){}
 
-FootLocationNode::FootLocationNode(FootLocation location)
+FootLocationNode::FootLocationNode(FootLocation& location, vector<Foot>* feet)
 {
-    _Location = location.getLocation();
-    _Theta = location.getTheta();
-    _FootIndex = location.getFootIndex();
+    _Location = FootLocation(location.getLocation(), location.getTheta(), location.getFootIndex(), feet);
 }
 
-FootLocationNode::FootLocationNode(Vector2d location, float theta, int footIndex)
+FootLocationNode::FootLocationNode(Vector2d location, float theta, int footIndex, vector<Foot>* feet)
 {
-    _Location = location;
-    _Theta = theta;
-    _FootIndex = footIndex;
+    _Location = FootLocation(location, theta, footIndex, feet);
 }
 
-Vector2d FootLocationNode::getLocation() const { return _Location; }
-float FootLocationNode::getTheta() const { return _Theta; }
-int FootLocationNode::getFootIndex() const { return _FootIndex; }
+FootLocationNode::~FootLocationNode()
+{
+    for(int i = 0; i < _Children.size(); i++)
+        delete _Children[i];
+}
+
+FootLocation FootLocationNode::getFootLocation() const { return _Location; }
+Vector2d FootLocationNode::getLocation() const { return _Location.getLocation(); }
+float FootLocationNode::getTheta() const { return _Location.getTheta(); }
+int FootLocationNode::getFootIndex() const { return _Location.getFootIndex(); }
+vector<Line> FootLocationNode::getBounds() const { return _Location.getBounds(); }
 vector<FootLocationNode*> FootLocationNode::getChildren() const { return _Children; }
 
 FootLocationNode* FootLocationNode::getChild(int index) const
@@ -87,8 +91,12 @@ void FootLocationNode::addChild(FootLocationNode* child)
     _Children.push_back(child);
 }
 
-void FootLocationNode::addChild(FootLocation child)
+void FootLocationNode::addChild(FootLocation& child, vector<Foot>* feet)
 {
-    FootLocationNode node(child);
-    _Children.push_back(&node);
+    // Initialize the node
+    FootLocationNode* newNode = new FootLocationNode(child, feet);
+    // Set the parent
+    newNode->setParent(*this);
+    // Add the child
+    _Children.push_back(newNode);
 }

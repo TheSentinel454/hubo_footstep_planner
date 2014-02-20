@@ -64,6 +64,7 @@ namespace fsp {
 class FootLocation
 {
     public:
+        FootLocation();
         FootLocation(Eigen::Vector2d location, float theta, int footIndex, std::vector<fsp::Foot>* feet);
 
         Eigen::Vector2d getLocation() const;
