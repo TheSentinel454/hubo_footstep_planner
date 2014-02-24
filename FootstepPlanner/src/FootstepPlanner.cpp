@@ -289,14 +289,14 @@ Vector2d FootstepPlanner::_getNextRandomPoint(FootLocation* lastFootNode)
 ///
 /// \brief FootstepPlanner::_getRandomFootLocation
 /// \param constraints
-/// \param flNearestNeighbor
+/// \param flStanceFoot
 /// \param flNewStart
 /// \return
 ///
-bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints, vector<Line> obstacles, FootLocation flNearestNeighbor, Vector2d randomPoint, FootLocation* flNewStart)
+bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints, vector<Line> obstacles, FootLocation flStanceFoot, Vector2d randomPoint, FootLocation* flNewStart)
 {
     // Determine the next foot in our step sequence (Left -> Right or Right -> Left)
-    int previousFootIndex = flNearestNeighbor.getFootIndex();
+    int previousFootIndex = flStanceFoot.getFootIndex();
     int nextFootIndex = (previousFootIndex + 1);
     nextFootIndex = nextFootIndex % _Feet.size();
     cout << "Previous Foot Index: " << previousFootIndex << " Next Foot Index: " << nextFootIndex << endl;
@@ -304,12 +304,12 @@ bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints,
     FootLocation* flFootConfig;
     int iteration = 0;
     // Randomly generate valid foot configuration
-    while(_generateRandomFootConfig(previousFootIndex, nextFootIndex, flFootConfig, constraints, flNearestNeighbor, randomPoint) &&
+    while(_generateRandomFootConfig(previousFootIndex, nextFootIndex, flFootConfig, constraints, flStanceFoot, randomPoint) &&
           iteration < 50)
     {
         cout << "Random Foot Config Success: " << iteration << endl;
         // Check for collision
-        if (_isCollision(*flFootConfig, flNearestNeighbor, obstacles))
+        if (_isCollision(*flFootConfig, flStanceFoot, obstacles))
         {
             cout << "Collision!" << endl;
             iteration++;
@@ -355,13 +355,13 @@ void FootstepPlanner::_updateRandomMinMaxValues(double xValue, double yValue)
 /// \param nextFootIndex
 /// \param flFootConfig
 /// \param constraints
-/// \param flNearestNeighbor
+/// \param flStanceFoot
 /// \return
 ///
-bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextFootIndex, FootLocation* flFootConfig, vector<FootConstraint> constraints, FootLocation flNearestNeighbor, Vector2d randomPoint)
+bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextFootIndex, FootLocation* flFootConfig, const vector<FootConstraint>& constraints, FootLocation flStanceFoot, Vector2d randomPoint)
 {
     // Find the corresponding constraint
-    FootConstraint* fc;
+    const FootConstraint* fc;
     for(int i = 0; i < constraints.size(); i++)
     {
         // Look for the constraint that corresponds to the next foot
@@ -372,8 +372,9 @@ bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextF
             fc = &constraints[i];
     }
     // Get the previous foot location so we know where to start from
-    Vector2d minPoint(flNearestNeighbor.getLocation()[0] + fc->getMinimumDeltaX(),
-                      flNearestNeighbor.getLocation()[1] + fc->getMinimumDeltaY());
+    Vector2d minPoint(flStanceFoot.getLocation()[0] + fc->getMinimumDeltaX(),
+                      flStanceFoot.getLocation()[1] + fc->getMinimumDeltaY());
+
     // Generate a random X in the valid range (bias towards randomPoint)
 
     // Generate a random Y in the valid range (bias towards randomPoint)
@@ -384,16 +385,16 @@ bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextF
 }
 
 ///
-/// \brief _isCollision
+/// \brief FootstepPlanner::_isCollision
 /// \param flFootConfig
-/// \param flNearestNeighbor
+/// \param flStanceFoot
 /// \param obstacles
 /// \return
 ///
-bool FootstepPlanner::_isCollision(FootLocation flFootConfig, FootLocation flNearestNeighbor, vector<Line> obstacles)
+bool FootstepPlanner::_isCollision(const FootLocation& flFootConfig, const FootLocation& flStanceFoot, vector<Line> obstacles)
 {
     // Check for collision with nearest neighbor
-    if (flFootConfig.isCollision(flNearestNeighbor))
+    if (flFootConfig.isCollision(flStanceFoot))
         // Collision
         return true;
     // No collision with nearest neighbor
@@ -459,8 +460,6 @@ Vector2d FootstepPlanner::_findNearestNeighbor(Vector2d location, flann::Index< 
 FootLocationNode* FootstepPlanner::_findFootLocationNode(Vector2d location, FootLocationNode* root)
 {
     FootLocationNode* node;
-    // TODO: Add finding of the foot location based on the location specified in
-    // the nearest neighbor tree
     // Check for a valid value
     if (root != NULL)
     {

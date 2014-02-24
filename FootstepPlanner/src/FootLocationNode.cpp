@@ -96,7 +96,7 @@ void FootLocationNode::addChild(FootLocation& child, vector<Foot>* feet)
     // Initialize the node
     FootLocationNode* newNode = new FootLocationNode(child, feet);
     // Set the parent
-    newNode->setParent(*this);
+    newNode->setParent(this);
     // Add the child
     _Children.push_back(newNode);
 }

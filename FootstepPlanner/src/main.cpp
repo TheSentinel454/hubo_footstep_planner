@@ -91,8 +91,8 @@ int main()
 
     // Initialize the planner
     FootstepPlanner planner(FEET);
-    vector<FootLocation> plan = planner.getStaticPlan();
-    //vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_RRT, constraints, currentLoc, goalLoc, obs);
+    //vector<FootLocation> plan = planner.getStaticPlan();
+    vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_RRT, constraints, currentLoc, goalLoc, obs);
     //vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_R_STAR, constraints, currentLoc, goalLoc, obs);
 
     // Initialize the visualizer

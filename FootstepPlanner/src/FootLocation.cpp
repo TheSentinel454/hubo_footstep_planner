@@ -98,7 +98,7 @@ FootLocation::FootLocation(Vector2d location, float theta, int footIndex, vector
 /// \param location
 /// \return
 ///
-bool FootLocation::isCollision(fsp::FootLocation location)
+bool FootLocation::isCollision(const fsp::FootLocation& location) const
 {
     // Iterate across this object's bounds
     for(int i = 0; i < _Bounds.size(); i++)

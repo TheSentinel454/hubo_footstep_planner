@@ -71,7 +71,7 @@ class FootLocation
         float getTheta() const;
         int getFootIndex() const;
         std::vector<fsp::Line> getBounds() const;
-        bool isCollision(fsp::FootLocation location);
+        bool isCollision(const fsp::FootLocation& location) const;
     protected:
 
     private:
