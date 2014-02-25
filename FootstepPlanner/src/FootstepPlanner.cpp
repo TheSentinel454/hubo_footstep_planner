@@ -103,6 +103,8 @@ vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<FootC
 ///
 vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
+    // Initialize the plan
+    vector<FootLocation> plan;
     // Initialize Current Position RRT
     flann::Matrix<double> initialState(new double[currentLocation.size() * 2], currentLocation.size(), 2);
     // Add each of the start locations
@@ -159,16 +161,12 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
 
         // Find the corresponding Foot Location Node
         FootLocationNode* flnNearestNeighbor = _findFootLocationNode(vNearestNeighbor, &startFootLocationRoot);
-        cout << "Corresponding FootLocationNode: " << endl
-             << flnNearestNeighbor->getLocation() << endl
-             << flnNearestNeighbor->getTheta() << " degrees" << endl
-             << flnNearestNeighbor->getFootIndex() << endl;
 
         // Randomly generate foot location configuration (Collision detection is done when generating the foot)
-        FootLocation* flNewStart;
-        if (_getRandomFootLocation(constraints, obstacles, flnNearestNeighbor->getFootLocation(), vRand, flNewStart))
+        FootLocation* flNewStart = _getRandomFootLocation(constraints, obstacles, flnNearestNeighbor->getFootLocation(), vRand);
+        if (flNewStart != NULL)
         {
-            cout << "Found valid Foot Location(S): " << (*flNewStart).getLocation() << endl;
+            cout << "Found valid Foot Location(S): " << flNewStart->getLocation() << endl;
             // Add to the start RRT
             flann::Matrix<double> mNewPoint(new double[1 * 2], 1, 2);
             mNewPoint[0][0] = flNewStart->getLocation()[0];   // X coordinate of new point
@@ -182,24 +180,40 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
         }
 
         // Now let's grow the goal RRT
-
         // Get the Random Point we want to grow towards
         // Same as above, coin flipping time
+        Vector2d vRandG = _getNextRandomPoint(lastStartNode);
+        cout << "Random Point(G): " << endl << vRandG << endl;
 
-        // Find the nearest neighbor in the goal RRT
+        // Find the nearest neighbor in the start RRT
+        Vector2d vNearestNeighborG = _findNearestNeighbor(vRandG, goalRRT);
+        cout << "Nearest Neighbor(G): " << endl << vNearestNeighborG << endl;
 
-        // Determine the next foot in our step sequence (Left -> Right or Right -> Left)
+        // Find the corresponding Foot Location Node
+        FootLocationNode* flnNearestNeighborG = _findFootLocationNode(vNearestNeighborG, &goalFootLocationRoot);
 
-        // Randomly generate foot location configuration
+        // Randomly generate foot location configuration (Collision detection is done when generating the foot)
+        FootLocation* flNewGoal = _getRandomFootLocation(constraints, obstacles, flnNearestNeighborG->getFootLocation(), vRandG);
+        if (flNewGoal != NULL)
+        {
+            cout << "Found valid Foot Location(G): " << flNewGoal->getLocation() << endl;
+            // Add to the start RRT
+            flann::Matrix<double> mNewPoint(new double[1 * 2], 1, 2);
+            mNewPoint[0][0] = flNewGoal->getLocation()[0];   // X coordinate of new point
+            mNewPoint[0][1] = flNewGoal->getLocation()[1];   // Y coordinate of new point
+            goalRRT.addPoints(mNewPoint);
 
-        // Check for collision (possibly regenerate)
-
-        // Add to the goal RRT
+            // Save the last Goal Node
+            lastGoalNode = flNewGoal;
+            // Add the new foot location node to the tree
+            flnNearestNeighborG->addChild((*flNewGoal), &_Feet);
+        }
 
         // Check for goal/start RRT connectivity
 
     }
     while(true);
+    return plan;
 }
 
 ///
@@ -293,7 +307,7 @@ Vector2d FootstepPlanner::_getNextRandomPoint(FootLocation* lastFootNode)
 /// \param flNewStart
 /// \return
 ///
-bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints, vector<Line> obstacles, FootLocation flStanceFoot, Vector2d randomPoint, FootLocation* flNewStart)
+FootLocation* FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints, vector<Line> obstacles, FootLocation flStanceFoot, Vector2d randomPoint)
 {
     // Determine the next foot in our step sequence (Left -> Right or Right -> Left)
     int previousFootIndex = flStanceFoot.getFootIndex();
@@ -301,15 +315,14 @@ bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints,
     nextFootIndex = nextFootIndex % _Feet.size();
     cout << "Previous Foot Index: " << previousFootIndex << " Next Foot Index: " << nextFootIndex << endl;
 
-    FootLocation* flFootConfig;
     int iteration = 0;
     // Randomly generate valid foot configuration
-    while(_generateRandomFootConfig(previousFootIndex, nextFootIndex, flFootConfig, constraints, flStanceFoot, randomPoint) &&
-          iteration < 50)
+    while(iteration < 50)
     {
+        FootLocation flFootConfig = _generateRandomFootConfig(previousFootIndex, nextFootIndex, constraints, flStanceFoot, randomPoint);
         cout << "Random Foot Config Success: " << iteration << endl;
         // Check for collision
-        if (_isCollision(*flFootConfig, flStanceFoot, obstacles))
+        if (_isCollision(flFootConfig, flStanceFoot, obstacles))
         {
             cout << "Collision!" << endl;
             iteration++;
@@ -318,14 +331,12 @@ bool FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> constraints,
         else
         {
             cout << "No collision!" << endl;
-            // Initialize the new footlocation
-            flNewStart = flFootConfig;
-            // Good to go
-            return true;
+            // Return the foot location
+            return new FootLocation(flFootConfig.getLocation(), flFootConfig.getTheta(), flFootConfig.getFootIndex(), &_Feet);
         }
     }
     // Return failure
-    return false;
+    return NULL;
 }
 
 ///
@@ -358,7 +369,7 @@ void FootstepPlanner::_updateRandomMinMaxValues(double xValue, double yValue)
 /// \param flStanceFoot
 /// \return
 ///
-bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextFootIndex, FootLocation* flFootConfig, const vector<FootConstraint>& constraints, FootLocation flStanceFoot, Vector2d randomPoint)
+FootLocation FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextFootIndex, const vector<FootConstraint>& constraints, FootLocation flStanceFoot, Vector2d randomPoint)
 {
     // Find the corresponding constraint
     const FootConstraint* fc;
@@ -374,14 +385,33 @@ bool FootstepPlanner::_generateRandomFootConfig(int previousFootIndex, int nextF
     // Get the previous foot location so we know where to start from
     Vector2d minPoint(flStanceFoot.getLocation()[0] + fc->getMinimumDeltaX(),
                       flStanceFoot.getLocation()[1] + fc->getMinimumDeltaY());
+    Vector2d maxPoint(flStanceFoot.getLocation()[0] + fc->getMaximumDeltaX(),
+                      flStanceFoot.getLocation()[1] + fc->getMaximumDeltaY());
 
-    // Generate a random X in the valid range (bias towards randomPoint)
+    // Check to see if the random point is within the threshold
+    if (randomPoint[0] >= minPoint[0] && randomPoint[0] <= maxPoint[0] &&
+        randomPoint[1] >= minPoint[1] && randomPoint[1] <= maxPoint[1])
+    {
+        // It seems we've found the foot location already
+        return FootLocation(randomPoint, 0.0f, nextFootIndex, &_Feet);
+    }
+    else
+    {
+        // Generate a random X in the valid range (bias towards randomPoint)
+        double dRandX = frand(minPoint[0], maxPoint[0]);
+        // Generate a random Y in the valid range (bias towards randomPoint)
+        double dRandY = frand(minPoint[1], maxPoint[1]);
+        // Generate a random Theta in the valid range
+        double dRandTheta = fc->getMinimumDeltaTheta() + frand(0, fc->getMaximumDeltaTheta() - fc->getMaximumDeltaTheta());
+        // Initialize the foot location
+        return FootLocation(Vector2d(dRandX, dRandY), dRandTheta, nextFootIndex, &_Feet);
+    }
+}
 
-    // Generate a random Y in the valid range (bias towards randomPoint)
-
-    // Generate a random Theta in the valid range
-
-    return true;
+double FootstepPlanner::frand(double fMin, double fMax)
+{
+    double f = (double)rand() / RAND_MAX;
+    return fMin + f * (fMax - fMin);
 }
 
 ///

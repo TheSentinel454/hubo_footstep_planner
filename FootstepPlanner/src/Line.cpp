@@ -76,10 +76,7 @@ Eigen::Vector2d Line::getEnd() const { return _End; }
 ///
 bool Line::isCollision(Line line) const
 {
-    // a = _Start
-    // b = _End
-    // c = line.getStart()
-    // d = line.getEnd();
+    // Calculate values for collision detection
     float denominator = ((_End[0] - _Start[0]) * (line.getEnd()[1] - line.getStart()[1])) - ((_End[1] - _Start[1]) * (line.getEnd()[0] - line.getStart()[0]));
     float numerator1 = ((_Start[1] - line.getStart()[1]) * (line.getEnd()[0] - line.getStart()[0])) - ((_Start[0] - line.getStart()[0]) * (line.getEnd()[1] - line.getStart()[1]));
     float numerator2 = ((_Start[1] - line.getStart()[1]) * (_End[0] - _Start[0])) - ((_Start[0] - line.getStart()[0]) * (_End[1] - _Start[1]));

@@ -64,8 +64,8 @@ int main()
 
     // Initialize the foot constraints
     vector<FootConstraint> constraints;
-    constraints.push_back(FootConstraint(0, 1, 2.0d, 4.0d, -4.0d, 4.0d, -25.0d, 30.0d));
-    constraints.push_back(FootConstraint(1, 0, 2.0d, 4.0d, -4.0d, 4.0d, -25.0d, 30.0d));
+    constraints.push_back(FootConstraint(0, 1, -4.0d, 4.0d, 2.0d, 4.0d, -25.0d, 30.0d));
+    constraints.push_back(FootConstraint(1, 0, -4.0d, 4.0d, -2.0d, -4.0d, -25.0d, 30.0d));
 
     // Initialize the current location
     vector<FootLocation> currentLoc;
@@ -91,8 +91,8 @@ int main()
 
     // Initialize the planner
     FootstepPlanner planner(FEET);
-    //vector<FootLocation> plan = planner.getStaticPlan();
-    vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_RRT, constraints, currentLoc, goalLoc, obs);
+    vector<FootLocation> plan = planner.getStaticPlan();
+    //vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_RRT, constraints, currentLoc, goalLoc, obs);
     //vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_R_STAR, constraints, currentLoc, goalLoc, obs);
 
     // Initialize the visualizer

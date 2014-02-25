@@ -95,14 +95,15 @@ class FootstepPlanner
         /// \param plan
         ///
         void _writePlannerOutput(double time, std::vector<FootLocation> plan);
+        double frand(double fMin, double fMax);
         Eigen::Vector2d _getNextRandomPoint(FootLocation* lastFootNode);
         Eigen::Vector2d _getRandomLocation();
-        bool _getRandomFootLocation(std::vector<FootConstraint> constraints, std::vector<Line> obstacles, FootLocation flStanceFoot, Eigen::Vector2d randomPoint, FootLocation* flNewStart);
+        FootLocation* _getRandomFootLocation(std::vector<FootConstraint> constraints, std::vector<Line> obstacles, FootLocation flStanceFoot, Eigen::Vector2d randomPoint);
         Eigen::Vector2d _findNearestNeighbor(Eigen::Vector2d location, flann::Index< flann::L2<double> > points);
         FootLocationNode* _findFootLocationNode(Eigen::Vector2d location, fsp::FootLocationNode* root);
         bool _isCollision(const fsp::FootLocation& flFootConfig, const fsp::FootLocation& flStanceFoot, std::vector<Line> obstacles);
         void _updateRandomMinMaxValues(double xValue, double yValue);
-        bool _generateRandomFootConfig(int previousFootIndex, int nextFootIndex, fsp::FootLocation* flFootConfig, const std::vector<FootConstraint>& constraints, fsp::FootLocation flStanceFoot, Eigen::Vector2d randomPoint);
+        FootLocation _generateRandomFootConfig(int previousFootIndex, int nextFootIndex, const std::vector<FootConstraint>& constraints, fsp::FootLocation flStanceFoot, Eigen::Vector2d randomPoint);
         double _minimumRandomX;
         double _maximumRandomX;
         double _minimumRandomY;
