@@ -55,6 +55,12 @@ using namespace flann;
 FootstepPlanner::FootstepPlanner(vector<Foot> ft)
 {
     _Feet = ft;
+    /*
+    _minimumRandomX = 0;
+    _minimumRandomY = 0;
+    _maximumRandomX = 500;
+    _maximumRandomY = 500;
+    */
 }
 
 ///
@@ -145,6 +151,7 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
 
     FootLocation* lastStartNode = &currentLocation[0];
     FootLocation* lastGoalNode = &goalLocation[0];
+    int i = 0;
     // Iterate until we find a path
     do
     {
@@ -166,7 +173,8 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
         FootLocation* flNewStart = _getRandomFootLocation(constraints, obstacles, flnNearestNeighbor->getFootLocation(), vRand);
         if (flNewStart != NULL)
         {
-            cout << "Found valid Foot Location(S): " << flNewStart->getLocation() << endl;
+            cout << "Found valid Foot Location(S): " << endl
+                 << flNewStart->getLocation() << endl;
             // Add to the start RRT
             flann::Matrix<double> mNewPoint(new double[1 * 2], 1, 2);
             mNewPoint[0][0] = flNewStart->getLocation()[0];   // X coordinate of new point
@@ -175,11 +183,51 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
 
             // Save the last Start Node
             lastStartNode = flNewStart;
+            plan.push_back((*flNewStart));
             // Add the new foot location node to the tree
             flnNearestNeighbor->addChild((*flNewStart), &_Feet);
+            // Check to see if we are close enough to the goal
+            double x2 = (*flNewStart).getLocation()[0];
+            double x1 = goalLocation[(*flNewStart).getFootIndex()].getLocation()[0];
+            double y2 = (*flNewStart).getLocation()[1];
+            double y1 = goalLocation[(*flNewStart).getFootIndex()].getLocation()[1];
+            double dstnc = sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+            if (dstnc <= 0.5d)
+            {
+                // Good enough, let's find the path
+                cout << "Found path: " << i << endl;
+                cout << "Final Node: " << (*flNewStart).getFootIndex() << endl
+                     << (*flNewStart).getLocation() << endl;
+                cout << "Goal Location: " << endl;
+                cout << goalLocation[(*flNewStart).getFootIndex()].getLocation() << endl;
+                cout << "Distance: " << dstnc << endl;
+                FootLocationNode* flnPath = flnNearestNeighbor;
+                vector<FootLocation> locs;
+                do
+                {
+                    if (flnPath->getParent() == NULL)
+                        break;
+                    else
+                    {
+                        locs.push_back(flnPath->getFootLocation());
+                        flnPath = flnPath->getParent();
+                    }
+                }
+                while(true);
+                plan.clear();
+                // Reverse the plan
+                for(int i = locs.size() - 1; i >= 0; i--)
+                {
+                    plan.push_back(locs[i]);
+                }
+                break;
+            }
         }
+        i++;
+        cout << "Iteration: " << i << endl;
 
         // Now let's grow the goal RRT
+        /*
         // Get the Random Point we want to grow towards
         // Same as above, coin flipping time
         Vector2d vRandG = _getNextRandomPoint(lastStartNode);
@@ -208,11 +256,14 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
             // Add the new foot location node to the tree
             flnNearestNeighborG->addChild((*flNewGoal), &_Feet);
         }
+        */
 
         // Check for goal/start RRT connectivity
 
     }
-    while(true);
+    while(i < 5000);
+    cout << "X: " << _minimumRandomX << "-" << _maximumRandomX << endl;
+    cout << "Y: " << _minimumRandomY << "-" << _maximumRandomY << endl;
     return plan;
 }
 
@@ -493,8 +544,8 @@ FootLocationNode* FootstepPlanner::_findFootLocationNode(Vector2d location, Foot
     // Check for a valid value
     if (root != NULL)
     {
-        cout << "Checking Location: " << endl << location << endl
-             << "Against: " << endl << root->getLocation() << endl;
+        //cout << "Checking Location: " << endl << location << endl
+        //     << "Against: " << endl << root->getLocation() << endl;
         // Check for a match on the root
         if (location[0] == root->getLocation()[0] &&
             location[1] == root->getLocation()[1])

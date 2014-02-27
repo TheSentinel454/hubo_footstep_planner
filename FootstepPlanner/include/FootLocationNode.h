@@ -73,6 +73,7 @@ class FootLocationNode
         std::vector<Line> getBounds() const;
         std::vector<FootLocationNode*> getChildren() const;
         FootLocationNode* getChild(int index) const;
+        FootLocationNode* getParent() const;
         void setParent(FootLocationNode* parent);
         void addChild(FootLocationNode* child);
         void addChild(FootLocation& child, std::vector<Foot>* feet);

@@ -64,8 +64,8 @@ int main()
 
     // Initialize the foot constraints
     vector<FootConstraint> constraints;
-    constraints.push_back(FootConstraint(0, 1, -4.0d, 4.0d, 2.0d, 4.0d, -25.0d, 30.0d));
-    constraints.push_back(FootConstraint(1, 0, -4.0d, 4.0d, -2.0d, -4.0d, -25.0d, 30.0d));
+    constraints.push_back(FootConstraint(0, 1, 0.0d, 4.0d, 2.0d, 4.0d, -25.0d, 30.0d));
+    constraints.push_back(FootConstraint(1, 0, 0.0d, 4.0d, -2.0d, -4.0d, -25.0d, 30.0d));
 
     // Initialize the current location
     vector<FootLocation> currentLoc;
@@ -74,8 +74,8 @@ int main()
 
     // Initialize the goal location
     vector<FootLocation> goalLoc;
-    goalLoc.push_back(FootLocation(Vector2d(67.0d, 3.0d), 0.0f, 0, &FEET));
-    goalLoc.push_back(FootLocation(Vector2d(67.0d, 0.0d), 0.0f, 1, &FEET));
+    goalLoc.push_back(FootLocation(Vector2d(100.0d, 3.0d), 0.0f, 0, &FEET));
+    goalLoc.push_back(FootLocation(Vector2d(100.0d, 0.0d), 0.0f, 1, &FEET));
 
     // Initialize the obstacles
     vector<Line> obs;
@@ -88,11 +88,18 @@ int main()
     obs.push_back(Line(Vector2d(25.0d, -38.0d), Vector2d(25.0d, -50.0d)));
     obs.push_back(Line(Vector2d(25.0d, -50.0d), Vector2d(10.0d, -17.0d)));
     obs.push_back(Line(Vector2d(10.0d, -17.0d), Vector2d(20.0d, -7.0d)));
+    /*
+    // Third obstacle
+    obs.push_back(Line(Vector2d(30.0d, 15.0d), Vector2d(35.0d, 15.0d)));
+    obs.push_back(Line(Vector2d(35.0d, 15.0d), Vector2d(35.0d, -5.0d)));
+    obs.push_back(Line(Vector2d(35.0d, -5.0d), Vector2d(30.0d, -5.0d)));
+    obs.push_back(Line(Vector2d(30.0d, -5.0d), Vector2d(30.0d, 15.0d)));
+    */
 
     // Initialize the planner
     FootstepPlanner planner(FEET);
-    vector<FootLocation> plan = planner.getStaticPlan();
-    //vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_RRT, constraints, currentLoc, goalLoc, obs);
+    //vector<FootLocation> plan = planner.getStaticPlan();
+    vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_RRT, constraints, currentLoc, goalLoc, obs);
     //vector<FootLocation> plan = planner.generatePlan(PLANNER_TYPE_R_STAR, constraints, currentLoc, goalLoc, obs);
 
     // Initialize the visualizer

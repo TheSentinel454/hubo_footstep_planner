@@ -81,6 +81,11 @@ FootLocationNode* FootLocationNode::getChild(int index) const
         return NULL;
 }
 
+FootLocationNode* FootLocationNode::getParent() const
+{
+    return _Parent;
+}
+
 void FootLocationNode::setParent(FootLocationNode* parent)
 {
     _Parent = parent;
