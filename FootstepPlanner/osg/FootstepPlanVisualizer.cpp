@@ -148,10 +148,10 @@ PositionAttitudeTransform* FootstepPlanVisualizer::_getFootTransform(FootLocatio
     double xOffset = _Feet[location.getFootIndex()].getLength() / 2;
     double yOffset = _Feet[location.getFootIndex()].getWidth() / 2;
     float theta = location.getTheta();
-    currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] - yOffset, 0));
-    currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] - yOffset, 0));
-    currentPositionVertices->push_back(Vec3(loc[0] + xOffset, loc[1] + yOffset, 0));
-    currentPositionVertices->push_back(Vec3(loc[0] - xOffset, loc[1] + yOffset, 0));
+    currentPositionVertices->push_back(Vec3(-xOffset, -yOffset, 0));
+    currentPositionVertices->push_back(Vec3(xOffset, -yOffset, 0));
+    currentPositionVertices->push_back(Vec3(xOffset, yOffset, 0));
+    currentPositionVertices->push_back(Vec3(-xOffset, yOffset, 0));
 
     // Set the Vertex array
     currentPositionGeometry->setVertexArray(currentPositionVertices);
@@ -173,7 +173,7 @@ PositionAttitudeTransform* FootstepPlanVisualizer::_getFootTransform(FootLocatio
 
     footTransform->addChild(currentPositionGeode);
 
-    osg::Vec3 footPosition(0, 0, 0);
+    Vec3 footPosition(loc[0], loc[1], 0);
     footTransform->setPosition(footPosition);
     footTransform->setAttitude(osg::Quat(osg::DegreesToRadians(theta), osg::Vec3(0, 0, 1)));
 
