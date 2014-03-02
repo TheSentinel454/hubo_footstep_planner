@@ -480,30 +480,55 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
     }
     cout << "MapPlan Size: " << mapPlan.size() << endl;
     cout << "Directions Size: " << directions.size() << endl;
-    /*
+
     int previousFootIndex = currentLocation[0].getFootIndex();
     int nextFootIndex = (previousFootIndex + 1);
     nextFootIndex = nextFootIndex % _Feet.size();
-    Vector2d vdLatestFootLocation;
-    Vector2i viLatestFootLocation;
-    for(int i = 0; i < mapPlan.size() - 1; i++)
+    Vector2d vdLatestFootLocation[_Feet.size()];
+    Vector2i viLatestFootLocation[_Feet.size()];
+    float theta = 0.0f;
+    for(int i = 0; i < mapPlan.size()-1; i++)
     {
         do
         {
+            switch(directions[i])
+            {
+            case 1:
+                theta = 180.0f;
+                break;
+            case 2:
+                theta = 90.0f;
+                break;
+            case 3:
+                theta = 270.0f;
+                break;
+            case 4:
+                theta = ((int)theta + 90) % 360;
+                break;
+            case 5:
+                theta = ((int)theta - 90 + 360) % 360;
+                break;
+            case 0:
+            default:
+                theta = 0.0f;
+                break;
+            }
+
             // Add a location
-            plan.push_back(FootLocation(_getWorldCoord(mapPlan[i + 1]), 0.0f, nextFootIndex, &_Feet));
+            plan.push_back(FootLocation(_getWorldCoord(mapPlan[i + 1]), theta, nextFootIndex, &_Feet));
 
             // Save the latest foot location
-            vdLatestFootLocation = plan.back().getLocation();
-            viLatestFootLocation = _getMapCoord(vdLatestFootLocation);
-        }
-        while(viLatestFootLocation[0] == mapPlan[i][0] &&
-              viLatestFootLocation[1] == mapPlan[i][1]);
+            vdLatestFootLocation[nextFootIndex] = plan.back().getLocation();
+            viLatestFootLocation[nextFootIndex] = _getMapCoord(vdLatestFootLocation[nextFootIndex]);
 
-        // Next foot
-        nextFootIndex = (nextFootIndex + 1) % _Feet.size();
+            // Move to the next foot
+            previousFootIndex = nextFootIndex;
+            nextFootIndex = (nextFootIndex + 1) % _Feet.size();
+        }
+        while(viLatestFootLocation[previousFootIndex][0] == mapPlan[i][0] &&
+              viLatestFootLocation[previousFootIndex][1] == mapPlan[i][1]);
+
     }
-    */
 
     return plan;
 }
@@ -564,10 +589,10 @@ int* FootstepPlanner::_getEnvironmentMap(vector<FootLocation> currentLocation, v
             MAX_POINT[1] = obstacles[i].getEnd()[1];
     }
     // Add some padding to the Min/Max points
-    MIN_POINT[0] -= (5 * DISCRETIZATION_RES);
-    MIN_POINT[1] -= (5 * DISCRETIZATION_RES);
-    MAX_POINT[0] += (5 * DISCRETIZATION_RES);
-    MAX_POINT[1] += (5 * DISCRETIZATION_RES);
+    MIN_POINT[0] -= (2 * DISCRETIZATION_RES);
+    MIN_POINT[1] -= (2 * DISCRETIZATION_RES);
+    MAX_POINT[0] += (2 * DISCRETIZATION_RES);
+    MAX_POINT[1] += (2 * DISCRETIZATION_RES);
 
     // Set the inverse minimum
     INV_MIN_POINT[0] = -MIN_POINT[0];
@@ -581,7 +606,7 @@ int* FootstepPlanner::_getEnvironmentMap(vector<FootLocation> currentLocation, v
 
     // Initialize map array
     int* mapPtr = new int[MAP_WIDTH * MAP_HEIGHT];
-
+    // Set all the states to open initially
     for(int i = 0; i < (MAP_WIDTH * MAP_HEIGHT); i++)
         mapPtr[i] = 1;
 
@@ -591,11 +616,9 @@ int* FootstepPlanner::_getEnvironmentMap(vector<FootLocation> currentLocation, v
     {
         // Add the start tile
         Vector2i startCoord = _getMapCoord(obstacles[i].getStart());
-        if(startCoord[0] >= 0 && startCoord[0] < MAP_WIDTH &&
-           startCoord[1] >= 0 && startCoord[1] < MAP_HEIGHT)
-        {
+        // Check for valid coord
+        if (_isValidMapCoord(startCoord))
             mapPtr[(startCoord[1] * MAP_WIDTH) + startCoord[0]] = 9;
-        }
         // Get slope
         float slopeRise = (obstacles[i].getEnd()[1] - obstacles[i].getStart()[1]);
         float slopeRun = (obstacles[i].getEnd()[0] - obstacles[i].getStart()[0]);
@@ -604,23 +627,24 @@ int* FootstepPlanner::_getEnvironmentMap(vector<FootLocation> currentLocation, v
         {
             Vector2i midCoord = _getMapCoord(Vector2d(obstacles[i].getStart()[0] + (slopeRun * j),
                                                       obstacles[i].getStart()[1] + (slopeRise * j)));
-            if(midCoord[0] >= 0 && midCoord[0] < MAP_WIDTH &&
-               midCoord[1] >= 0 && midCoord[1] < MAP_HEIGHT)
-            {
+            // Check for valid coord
+            if (_isValidMapCoord(midCoord))
                 mapPtr[(midCoord[1] * MAP_WIDTH) + midCoord[0]] = 9;
-            }
         }
         // Add the end tile
         Vector2i endCoord = _getMapCoord(obstacles[i].getEnd());
-        if(endCoord[0] >= 0 && endCoord[0] < MAP_WIDTH &&
-           endCoord[1] >= 0 && endCoord[1] < MAP_HEIGHT)
-        {
+        if (_isValidMapCoord(endCoord))
             mapPtr[(endCoord[1] * MAP_WIDTH) + endCoord[0]] = 9;
-        }
     }
 
     // Return the pointer to the map
     return mapPtr;
+}
+
+bool FootstepPlanner::_isValidMapCoord(Vector2i coord)
+{
+    return (coord[0] >= 0 && coord[0] < MAP_WIDTH &&
+            coord[1] >= 0 && coord[1] < MAP_HEIGHT);
 }
 
 float FootstepPlanner::_getDiscretizationResolution(vector<FootConstraint> constraints)

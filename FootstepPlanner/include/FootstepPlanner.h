@@ -110,6 +110,7 @@ class FootstepPlanner
         void _writePlannerOutput(double time, std::vector<FootLocation> plan);
         double frand(double fMin, double fMax);
 
+        bool _isValidMapCoord(Eigen::Vector2i coord);
         int* _getEnvironmentMap(vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles);
         float _getDiscretizationResolution(vector<FootConstraint> constraints);
         Eigen::Vector2i _getMapCoord(Eigen::Vector2d worldCoord);
