@@ -43,11 +43,13 @@
  */
 
 #include "FootstepPlanner.h"
+#define DISPLAY_SOLUTION
 
 using namespace fsp;
 using namespace std;
 using namespace Eigen;
 using namespace flann;
+using namespace astar;
 
 ///
 /// \brief FootstepPlanner::FootstepPlanner
@@ -55,12 +57,6 @@ using namespace flann;
 FootstepPlanner::FootstepPlanner(vector<Foot> ft)
 {
     _Feet = ft;
-    /*
-    _minimumRandomX = 0;
-    _minimumRandomY = 0;
-    _maximumRandomX = 500;
-    _maximumRandomY = 500;
-    */
 }
 
 ///
@@ -77,10 +73,14 @@ vector<FootLocation> FootstepPlanner::generatePlan(int plannerType, vector<FootC
     clock_t tStart = clock();
     // Initialize plan
     vector<FootLocation> plan;
+    vector<Vector2i> mapPlan;
     switch(plannerType)
     {
         case PLANNER_TYPE_R_STAR:
             plan = runRStarPlanner(constraints, currentLocation, goalLocation, obstacles);
+            break;
+        case PLANNER_TYPE_A_STAR:
+            plan = runAStarPlanner(constraints, currentLocation, goalLocation, obstacles, mapPlan);
             break;
         case PLANNER_TYPE_RRT:
         default:
@@ -265,6 +265,399 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
     cout << "X: " << _minimumRandomX << "-" << _maximumRandomX << endl;
     cout << "Y: " << _minimumRandomY << "-" << _maximumRandomY << endl;
     return plan;
+}
+
+vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles, vector<Vector2i>& mapPlan)
+{
+    AStarSearch<MapSearchNode> astarsearch;
+
+    // Get the environment map based on the start/goal location and obstacles
+    DISCRETIZATION_RES = _getDiscretizationResolution(constraints);
+    ENVIRONMENT_MAP = _getEnvironmentMap(currentLocation, goalLocation, obstacles);
+
+    // Create a start state
+    MapSearchNode nodeStart(_getMapCoord(currentLocation[0].getLocation()));
+
+    // Define the goal state
+    MapSearchNode nodeEnd(_getMapCoord(goalLocation[0].getLocation()));
+
+    // Set Start and goal states
+    astarsearch.SetStartAndGoalStates( nodeStart, nodeEnd );
+
+    unsigned int SearchState;
+    unsigned int SearchSteps = 0;
+
+    do
+    {
+        SearchState = astarsearch.SearchStep();
+        SearchSteps++;
+
+#if DEBUG_LISTS
+        cout << "Steps:" << SearchSteps << "\n";
+        int len = 0;
+
+        cout << "Open:\n";
+        MapSearchNode *p = astarsearch.GetOpenListStart();
+        while( p )
+        {
+            len++;
+#if !DEBUG_LIST_LENGTHS_ONLY
+            ((MapSearchNode *)p)->PrintNodeInfo();
+#endif
+            p = astarsearch.GetOpenListNext();
+        }
+        cout << "Open list has " << len << " nodes\n";
+        len = 0;
+
+        cout << "Closed:\n";
+        p = astarsearch.GetClosedListStart();
+        while( p )
+        {
+            len++;
+#if !DEBUG_LIST_LENGTHS_ONLY
+            p->PrintNodeInfo();
+#endif
+            p = astarsearch.GetClosedListNext();
+        }
+
+        cout << "Closed list has " << len << " nodes\n";
+#endif
+    }
+    while( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SEARCHING );
+
+    vector<FootLocation> plan;
+    if( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SUCCEEDED )
+    {
+        cout << "Search found goal state\n";
+        MapSearchNode *node = astarsearch.GetSolutionStart();
+
+#ifdef DISPLAY_SOLUTION
+        cout << "Displaying solution\n";
+        node->PrintNodeInfo();
+#endif
+        int steps = 0;
+        mapPlan.push_back(Vector2i(node->x, node->y));
+
+        for(;;)
+        {
+            node = astarsearch.GetSolutionNext();
+            if(!node)
+                break;
+#ifdef DISPLAY_SOLUTION
+            node->PrintNodeInfo();
+#endif
+            mapPlan.push_back(Vector2i(node->x, node->y));
+            steps++;
+        };
+        cout << "Solution steps " << steps << endl;
+        // Once you're done with the solution you can free the nodes up
+        astarsearch.FreeSolutionNodes();
+    }
+    else if( SearchState == AStarSearch<MapSearchNode>::SEARCH_STATE_FAILED )
+    {
+        cout << "Search terminated. Did not find goal state\n";
+    }
+
+    // Display the number of loops the search went through
+    cout << "SearchSteps : " << SearchSteps << "\n";
+    astarsearch.EnsureMemoryFreed();
+
+    int prevDirection = 0;
+    // 0 = Moving Right
+    // 1 = Moving Left
+    // 2 = Moving Up
+    // 3 = Moving Down
+    vector<int> directions;
+    // 0 = Continue Right
+    // 1 = Continue Left
+    // 2 = Continue Up
+    // 3 = Continue Down
+    // 4 = Turn Left
+    // 5 = Turn Right
+    // Now we need to generate the foot step path
+    for(int i = 0; i < (mapPlan.size() - 1); i++)
+    {
+        // Make sure we have the next location
+        if ((i + 1) < mapPlan.size())
+        {
+            // Check for X increasing (Moving Right)
+            if (mapPlan[i][0] < mapPlan[i+1][0])
+            {
+                switch(prevDirection)
+                {
+                case 0:
+                    directions.push_back(0);
+                    cout << "Continue Right" << endl;
+                    break;
+                case 2:
+                    directions.push_back(5);
+                    cout << "Turning Right" << endl;
+                    break;
+                case 3:
+                    directions.push_back(4);
+                    cout << "Turning Left" << endl;
+                    break;
+                case 1:
+                default:
+                    cout << "WTF?!?!" << endl;
+                    break;
+                }
+                prevDirection = 0;
+            }
+            // Check for X decreasing (Moving Left)
+            if (mapPlan[i][0] > mapPlan[i+1][0])
+            {
+                switch(prevDirection)
+                {
+                case 1:
+                    directions.push_back(1);
+                    cout << "Continue Left" << endl;
+                    break;
+                case 2:
+                    directions.push_back(4);
+                    cout << "Turning Left" << endl;
+                    break;
+                case 3:
+                    directions.push_back(5);
+                    cout << "Turning Right" << endl;
+                    break;
+                case 0:
+                default:
+                    cout << "WTF?!?!" << endl;
+                    break;
+                }
+                prevDirection = 1;
+            }
+            // Check for Y increasing (Moving Up)
+            if (mapPlan[i][1] < mapPlan[i+1][1])
+            {
+                switch(prevDirection)
+                {
+                case 2:
+                    directions.push_back(2);
+                    cout << "Continue Up" << endl;
+                    break;
+                case 0:
+                    directions.push_back(4);
+                    cout << "Turning Left" << endl;
+                    break;
+                case 1:
+                    directions.push_back(5);
+                    cout << "Turning Right" << endl;
+                    break;
+                case 3:
+                default:
+                    cout << "WTF?!?!" << endl;
+                    break;
+                }
+                prevDirection = 2;
+            }
+            // Check for Y decreasing (Moving Down)
+            if (mapPlan[i][1] > mapPlan[i+1][1])
+            {
+                switch(prevDirection)
+                {
+                case 3:
+                    directions.push_back(3);
+                    cout << "Continue Down" << endl;
+                    break;
+                case 1:
+                    directions.push_back(4);
+                    cout << "Turning Left" << endl;
+                    break;
+                case 0:
+                    directions.push_back(5);
+                    cout << "Turning Right" << endl;
+                    break;
+                case 2:
+                default:
+                    cout << "WTF?!?!" << endl;
+                    break;
+                }
+                prevDirection = 3;
+            }
+        }
+    }
+    cout << "MapPlan Size: " << mapPlan.size() << endl;
+    cout << "Directions Size: " << directions.size() << endl;
+    /*
+    int previousFootIndex = currentLocation[0].getFootIndex();
+    int nextFootIndex = (previousFootIndex + 1);
+    nextFootIndex = nextFootIndex % _Feet.size();
+    Vector2d vdLatestFootLocation;
+    Vector2i viLatestFootLocation;
+    for(int i = 0; i < mapPlan.size() - 1; i++)
+    {
+        do
+        {
+            // Add a location
+            plan.push_back(FootLocation(_getWorldCoord(mapPlan[i + 1]), 0.0f, nextFootIndex, &_Feet));
+
+            // Save the latest foot location
+            vdLatestFootLocation = plan.back().getLocation();
+            viLatestFootLocation = _getMapCoord(vdLatestFootLocation);
+        }
+        while(viLatestFootLocation[0] == mapPlan[i][0] &&
+              viLatestFootLocation[1] == mapPlan[i][1]);
+
+        // Next foot
+        nextFootIndex = (nextFootIndex + 1) % _Feet.size();
+    }
+    */
+
+    return plan;
+}
+
+int* FootstepPlanner::_getEnvironmentMap(vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
+{
+    // Current location
+    for(int i = 0; i < currentLocation.size(); i++)
+    {
+        // Check for the minimum point
+        if (currentLocation[i].getLocation()[0] < MIN_POINT[0])
+            MIN_POINT[0] = currentLocation[i].getLocation()[0];
+        if (currentLocation[i].getLocation()[1] < MIN_POINT[1])
+            MIN_POINT[1] = currentLocation[i].getLocation()[1];
+        // Check for the maximum point
+        if (currentLocation[i].getLocation()[0] > MAX_POINT[0])
+            MAX_POINT[0] = currentLocation[i].getLocation()[0];
+        if (currentLocation[i].getLocation()[1] > MAX_POINT[1])
+            MAX_POINT[1] = currentLocation[i].getLocation()[1];
+    }
+    // Goal Location
+    for(int i = 0; i < goalLocation.size(); i++)
+    {
+        // Check for the minimum point
+        if (goalLocation[i].getLocation()[0] < MIN_POINT[0])
+            MIN_POINT[0] = goalLocation[i].getLocation()[0];
+        if (goalLocation[i].getLocation()[1] < MIN_POINT[1])
+            MIN_POINT[1] = goalLocation[i].getLocation()[1];
+        // Check for the maximum point
+        if (goalLocation[i].getLocation()[0] > MAX_POINT[0])
+            MAX_POINT[0] = goalLocation[i].getLocation()[0];
+        if (goalLocation[i].getLocation()[1] > MAX_POINT[1])
+            MAX_POINT[1] = goalLocation[i].getLocation()[1];
+    }
+    // Obstacle locations
+    for(int i = 0; i < obstacles.size(); i++)
+    {
+        // Check for the minimum point (Start)
+        if (obstacles[i].getStart()[0] < MIN_POINT[0])
+            MIN_POINT[0] = obstacles[i].getStart()[0];
+        if (obstacles[i].getStart()[1] < MIN_POINT[1])
+            MIN_POINT[1] = obstacles[i].getStart()[1];
+        // Check for the minimum point (End)
+        if (obstacles[i].getEnd()[0] < MIN_POINT[0])
+            MIN_POINT[0] = obstacles[i].getEnd()[0];
+        if (obstacles[i].getEnd()[1] < MIN_POINT[1])
+            MIN_POINT[1] = obstacles[i].getEnd()[1];
+
+        // Check for the maximum point (Start)
+        if (obstacles[i].getStart()[0] > MAX_POINT[0])
+            MAX_POINT[0] = obstacles[i].getStart()[0];
+        if (obstacles[i].getStart()[1] > MAX_POINT[1])
+            MAX_POINT[1] = obstacles[i].getStart()[1];
+        // Check for the maximum point (End)
+        if (obstacles[i].getEnd()[0] > MAX_POINT[0])
+            MAX_POINT[0] = obstacles[i].getEnd()[0];
+        if (obstacles[i].getEnd()[1] > MAX_POINT[1])
+            MAX_POINT[1] = obstacles[i].getEnd()[1];
+    }
+    // Add some padding to the Min/Max points
+    MIN_POINT[0] -= (5 * DISCRETIZATION_RES);
+    MIN_POINT[1] -= (5 * DISCRETIZATION_RES);
+    MAX_POINT[0] += (5 * DISCRETIZATION_RES);
+    MAX_POINT[1] += (5 * DISCRETIZATION_RES);
+
+    // Set the inverse minimum
+    INV_MIN_POINT[0] = -MIN_POINT[0];
+    INV_MIN_POINT[1] = -MIN_POINT[1];
+
+    // Find the map width based on the min/max point and discretization resolution
+    MAP_WIDTH = ((MAX_POINT[0] - MIN_POINT[0]) / DISCRETIZATION_RES) + 1;
+
+    // Find the map height based on the min/max point and discretization resolution
+    MAP_HEIGHT = ((MAX_POINT[1] - MIN_POINT[1]) / DISCRETIZATION_RES) + 1;
+
+    // Initialize map array
+    int* mapPtr = new int[MAP_WIDTH * MAP_HEIGHT];
+
+    for(int i = 0; i < (MAP_WIDTH * MAP_HEIGHT); i++)
+        mapPtr[i] = 1;
+
+    // Set all the obstacle locations to 9
+    // Go through each of the obstacles
+    for(int i = 0; i < obstacles.size(); i++)
+    {
+        // Add the start tile
+        Vector2i startCoord = _getMapCoord(obstacles[i].getStart());
+        if(startCoord[0] >= 0 && startCoord[0] < MAP_WIDTH &&
+           startCoord[1] >= 0 && startCoord[1] < MAP_HEIGHT)
+        {
+            mapPtr[(startCoord[1] * MAP_WIDTH) + startCoord[0]] = 9;
+        }
+        // Get slope
+        float slopeRise = (obstacles[i].getEnd()[1] - obstacles[i].getStart()[1]);
+        float slopeRun = (obstacles[i].getEnd()[0] - obstacles[i].getStart()[0]);
+        // Iterate across the slope and add the obstacle points
+        for(float j = 0.00f; j <= 1.00f; j+= 0.01f)
+        {
+            Vector2i midCoord = _getMapCoord(Vector2d(obstacles[i].getStart()[0] + (slopeRun * j),
+                                                      obstacles[i].getStart()[1] + (slopeRise * j)));
+            if(midCoord[0] >= 0 && midCoord[0] < MAP_WIDTH &&
+               midCoord[1] >= 0 && midCoord[1] < MAP_HEIGHT)
+            {
+                mapPtr[(midCoord[1] * MAP_WIDTH) + midCoord[0]] = 9;
+            }
+        }
+        // Add the end tile
+        Vector2i endCoord = _getMapCoord(obstacles[i].getEnd());
+        if(endCoord[0] >= 0 && endCoord[0] < MAP_WIDTH &&
+           endCoord[1] >= 0 && endCoord[1] < MAP_HEIGHT)
+        {
+            mapPtr[(endCoord[1] * MAP_WIDTH) + endCoord[0]] = 9;
+        }
+    }
+
+    // Return the pointer to the map
+    return mapPtr;
+}
+
+float FootstepPlanner::_getDiscretizationResolution(vector<FootConstraint> constraints)
+{
+    float dr = 0;
+    // Go through each of the feet and make it the max width/length of either foot
+    for(int i = 0; i < _Feet.size(); i++)
+    {
+        // Check the width for a greater value
+        dr = max(_Feet[i].getWidth(), dr);
+        // Check the length for a greater value
+        dr = max(_Feet[i].getLength(), dr);
+    }
+
+    // Now let's check the constraints
+    for(int i = 0; i < constraints.size(); i++)
+    {
+        FootConstraint fc = constraints[i];
+        float widthRange = _Feet[fc.getRefFootIndex()].getWidth() + _Feet[fc.getFootIndex()].getWidth() + fc.getMaximumDeltaY();
+        float lengthRange = max(fc.getMaximumDeltaX() + 0.5d * _Feet[fc.getFootIndex()].getLength(), 0.5d * _Feet[fc.getRefFootIndex()].getLength()) +
+                            max(abs(fc.getMinimumDeltaX()) + 0.5d * _Feet[fc.getFootIndex()].getLength(), 0.5d * _Feet[fc.getRefFootIndex()].getLength());
+        dr = max(widthRange, dr);
+        dr = max(lengthRange, dr);
+
+    }
+    return dr;
+}
+
+Vector2i FootstepPlanner::_getMapCoord(Vector2d worldCoord)
+{
+    return Vector2i(floor((worldCoord[0] + INV_MIN_POINT[0]) / DISCRETIZATION_RES), floor((worldCoord[1] + INV_MIN_POINT[1]) / DISCRETIZATION_RES));
+}
+
+Vector2d FootstepPlanner::_getWorldCoord(Vector2i mapCoord)
+{
+    return Vector2d((mapCoord[0] * DISCRETIZATION_RES) - INV_MIN_POINT[0],
+                    (mapCoord[1] * DISCRETIZATION_RES) - INV_MIN_POINT[1]);
 }
 
 ///

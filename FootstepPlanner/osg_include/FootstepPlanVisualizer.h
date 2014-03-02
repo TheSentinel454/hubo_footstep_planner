@@ -75,6 +75,7 @@ class FootstepPlanVisualizer
 
         void visualizePlan(std::vector<fsp::FootLocation>, std::vector<fsp::FootLocation>, std::vector<fsp::Line>, std::vector<fsp::FootLocation>);
         void visualizePlanUsingTransform(std::vector<fsp::FootLocation>, std::vector<fsp::FootLocation>, std::vector<fsp::Line>, std::vector<fsp::FootLocation>);
+        void visualizePlan2(Eigen::Vector2d minPoint, Eigen::Vector2d maxPoint, float discretizationResolution, std::vector<fsp::FootLocation>, std::vector<fsp::FootLocation>, std::vector<fsp::Line>, std::vector<fsp::FootLocation>, std::vector<Eigen::Vector2i>);
 
     protected:
 
@@ -82,6 +83,9 @@ class FootstepPlanVisualizer
         osg::PositionAttitudeTransform* _getBoxObstacle(osg::Vec3 center, float lengthX, float lengthY, float lengthZ, float theta);
         osg::Geode* _getObstacle(std::vector<fsp::Line> obstacles);
         osg::PositionAttitudeTransform* _getFootTransform(fsp::FootLocation location, osg::Vec4 color);
+        osg::Geode* _getTileFromMap(float mapX, float mapY, float discretizationResolution, Eigen::Vector2d invMinPoint, osg::Vec4 color);
+        osg::Geode* _getTileFromWorld(float worldX, float worldY, float discretizationResolution, Eigen::Vector2d invMinPoint, osg::Vec4 color);
+
         std::vector<Foot> _Feet;
     };
 } // namespace fsp

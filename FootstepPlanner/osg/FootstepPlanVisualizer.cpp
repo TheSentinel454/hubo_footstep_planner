@@ -214,7 +214,6 @@ void FootstepPlanVisualizer::visualizePlanUsingTransform(vector<FootLocation> cu
     }
 
     // Add the obstacles (red)
-    //root->addChild(getBoxObstacle(Vec3(30.0, 20.0, 1.25), 60.0, 20.0, 2.5, 0.0));
     root->addChild(_getObstacle(obstacles));
 
     // Add the steps (yellow)
@@ -252,6 +251,188 @@ void FootstepPlanVisualizer::visualizePlanUsingTransform(vector<FootLocation> cu
     osgViewer::Viewer viewer;
     viewer.setSceneData(root);
     viewer.run();
+}
+
+
+void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint, float discretizationResolution, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles, vector<FootLocation> plan, vector<Vector2i> mapPlan)
+{
+    // Initialize the root
+    Group* root = new Group();
+
+    // Initialize colors
+    Vec4 blue = Vec4(0.0f, 0.0f, 1.0f, 1.0f);
+    Vec4 opaque_blue = Vec4(0.0f, 0.0f, 1.0f, 0.3f);
+    Vec4 green = Vec4(0.0f, 1.0f, 0.0f, 1.0f);
+    Vec4 opaque_green = Vec4(0.0f, 1.0f, 0.0f, 0.3f);
+    Vec4 red = Vec4(1.0f, 0.0f, 0.0f, 1.0f);
+    Vec4 opaque_red = Vec4(1.0f, 0.0f, 0.0f, 0.3f);
+    Vec4 yellow = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
+    Vec4 opaque_yellow = Vec4(1.0f, 1.0f, 0.0f, 0.3f);
+    Vec4 black = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    Vec4 white = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Add the current position(blue).
+    for(int i = 0; i < currentLocation.size();i++)
+    {
+        root->addChild(_getFootTransform(currentLocation[i], blue));
+    }
+
+    // Add the goal position (green)
+    for(int i = 0; i < goalLocation.size();i++)
+    {
+        root->addChild(_getFootTransform(goalLocation[i], green));
+    }
+
+    // Add the obstacles (red)
+    root->addChild(_getObstacle(obstacles));
+
+    // Add the steps (yellow)
+    for(int i = 0; i < plan.size(); i++)
+    {
+        root->addChild(_getFootTransform(plan[i], yellow));
+    }
+
+    // Add the plan outline (black)
+    Geode* planOutlineGeode = new Geode();
+    Geometry* planOutlineGeometry = new Geometry();
+    Vec4Array* planOutlineColors = new Vec4Array;
+    planOutlineColors->push_back(black);
+
+    // Add the points for the lines
+    Vec3Array* planOutlineVertices = new Vec3Array;
+    planOutlineVertices->push_back(Vec3(currentLocation[0].getLocation()[0], currentLocation[0].getLocation()[1], 0));
+    for(int i = 0; i < plan.size(); i++)
+    {
+        Vector2d loc = plan[i].getLocation();
+        planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
+        planOutlineVertices->push_back(Vec3(loc[0], loc[1], 0));
+    }
+    // Set the Vertex array
+    planOutlineGeometry->setVertexArray(planOutlineVertices);
+
+    // Set the color
+    planOutlineGeometry->setColorArray(planOutlineColors);
+    planOutlineGeometry->setColorBinding(Geometry::BIND_OVERALL);
+    // Add the primitive set
+    planOutlineGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,planOutlineVertices->size()));
+    planOutlineGeode->addDrawable(planOutlineGeometry);
+    root->addChild(planOutlineGeode);
+
+    // Add the grid (black)
+    Geode* gridGeode = new Geode();
+    Geometry* gridGeometry = new Geometry();
+    Vec4Array* gridColors = new Vec4Array;
+    gridColors->push_back(white);
+
+    // Add the points for the lines
+    Vec3Array* gridVertices = new Vec3Array;
+    for(float x = minPoint[0]; x <= maxPoint[0]; x += discretizationResolution)
+    {
+        gridVertices->push_back(Vec3(x, minPoint[1], 0));
+        gridVertices->push_back(Vec3(x, maxPoint[1], 0));
+    }
+    for(float y = minPoint[1]; y <= maxPoint[1]; y += discretizationResolution)
+    {
+        gridVertices->push_back(Vec3(minPoint[0], y, 0));
+        gridVertices->push_back(Vec3(maxPoint[0], y, 0));
+    }
+    // Set the Vertex array
+    gridGeometry->setVertexArray(gridVertices);
+
+    // Set the color
+    gridGeometry->setColorArray(gridColors);
+    gridGeometry->setColorBinding(Geometry::BIND_OVERALL);
+    // Add the primitive set
+    gridGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,gridVertices->size()));
+    gridGeode->addDrawable(gridGeometry);
+    root->addChild(gridGeode);
+
+    Vector2d invMinPoint(-minPoint[0], -minPoint[1]);
+
+    // Add the Start tile
+    root->addChild(_getTileFromWorld(currentLocation[0].getLocation()[0],
+                                     currentLocation[0].getLocation()[1],
+                                     discretizationResolution,
+                                     invMinPoint,
+                                     opaque_blue));
+
+    // Add the Goal tile
+    root->addChild(_getTileFromWorld(goalLocation[0].getLocation()[0],
+                                     goalLocation[0].getLocation()[1],
+                                     discretizationResolution,
+                                     invMinPoint,
+                                     opaque_green));
+    // Go through each of the obstacles
+    for(int i = 0; i < obstacles.size(); i++)
+    {
+        // Add the start tile
+        root->addChild(_getTileFromWorld(obstacles[i].getStart()[0],
+                                         obstacles[i].getStart()[1],
+                                         discretizationResolution, invMinPoint, opaque_red));
+        // Get slope
+        float slopeRise = (obstacles[i].getEnd()[1] - obstacles[i].getStart()[1]);
+        float slopeRun = (obstacles[i].getEnd()[0] - obstacles[i].getStart()[0]);
+        // Iterate across the slope and add the obstacle points
+        for(float j = 0.00f; j <= 1.00f; j+= 0.01f)
+        {
+            root->addChild(_getTileFromWorld(obstacles[i].getStart()[0] + (slopeRun * j),
+                                             obstacles[i].getStart()[1] + (slopeRise * j),
+                                             discretizationResolution, invMinPoint, opaque_red));
+        }
+        // Add the end tile
+        root->addChild(_getTileFromWorld(obstacles[i].getEnd()[0],
+                                         obstacles[i].getEnd()[1],
+                                         discretizationResolution, invMinPoint, opaque_red));
+    }
+
+    // Go through the map Plan
+    for(int i = 0; i < mapPlan.size(); i++)
+    {
+        // Add the plan tile
+        root->addChild(_getTileFromMap(mapPlan[i][0],
+                                       mapPlan[i][1],
+                                       discretizationResolution, invMinPoint, opaque_yellow));
+    }
+
+    osgViewer::Viewer viewer;
+    viewer.setSceneData(root);
+    viewer.run();
+}
+
+///
+/// \brief FootstepPlanVisualizer::_getTileFromWorld
+/// \param worldX
+/// \param worldY
+/// \param discretizationResolution
+/// \param color
+/// \return
+///
+Geode* FootstepPlanVisualizer::_getTileFromWorld(float worldX, float worldY, float discretizationResolution, Vector2d invMinPoint, Vec4 color)
+{
+    return _getTileFromMap(floor((worldX + invMinPoint[0]) / discretizationResolution),
+                           floor((worldY + invMinPoint[1]) / discretizationResolution),
+                           discretizationResolution, invMinPoint, color);
+}
+
+///
+/// \brief FootstepPlanVisualizer::_getTileFromMap
+/// \param mapX
+/// \param mapY
+/// \param discretizationResolution
+/// \param color
+/// \return
+///
+Geode* FootstepPlanVisualizer::_getTileFromMap(float mapX, float mapY, float discretizationResolution, Vector2d invMinPoint, Vec4 color)
+{
+    Vec3 drawPos((mapX * discretizationResolution - invMinPoint[0]) + discretizationResolution/2.0f,
+                 (mapY * discretizationResolution - invMinPoint[1]) + discretizationResolution/2.0f, 0.0f);
+
+    Geode* boxGeode = new Geode();
+    osg::Box* boxPointer = new osg::Box(drawPos, discretizationResolution, discretizationResolution, 0);
+    osg::ShapeDrawable* boxShape = new osg::ShapeDrawable(boxPointer);
+    boxShape->setColor(color);
+    boxGeode->addDrawable(boxShape);
+    return boxGeode;
 }
 
 ///

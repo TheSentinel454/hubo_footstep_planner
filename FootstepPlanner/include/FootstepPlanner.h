@@ -51,13 +51,13 @@
 #include "FootLocationNode.h"
 #include "Line.h"
 #include "FootConstraint.h"
+#include "MapSearchNode.h"
 #include <eigen3/Eigen/Core>
 #include <stdlib.h>
 #include <time.h>
 #include <flann/flann.hpp>
 #include <iostream>
 #include <fstream>
-#include <boost/graph/adjacency_list.hpp>
 
 namespace fsp {
 
@@ -69,6 +69,10 @@ const int PLANNER_TYPE_RRT = 0;
 /// \brief PLANNER_TYPE_R_STAR
 ///
 const int PLANNER_TYPE_R_STAR = 1;
+///
+/// \brief PLANNER_TYPE_A_STAR
+///
+const int PLANNER_TYPE_A_STAR = 2;
 
 /*!
   * \class Footstep Planner
@@ -79,12 +83,21 @@ const int PLANNER_TYPE_R_STAR = 1;
 class FootstepPlanner
 {
     public:
+        static int* ENVIRONMENT_MAP;
+        static float DISCRETIZATION_RES;
+        static Eigen::Vector2d MIN_POINT;
+        static Eigen::Vector2d INV_MIN_POINT;
+        static Eigen::Vector2d MAX_POINT;
+        static int MAP_WIDTH;
+        static int MAP_HEIGHT;
+
         FootstepPlanner(std::vector<Foot> ft);
 
         std::vector<FootLocation> generatePlan(int plannerType, std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
         std::vector<FootLocation> getStaticPlan();
 
         std::vector<FootLocation> runRRTPlanner(std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
+        std::vector<FootLocation> runAStarPlanner(std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles, std::vector<Eigen::Vector2i>& mapPlan);
         std::vector<FootLocation> runRStarPlanner(std::vector<FootConstraint> constraints, std::vector<FootLocation> currentLocation, std::vector<FootLocation> goalLocation, std::vector<Line> obstacles);
     protected:
 
@@ -96,6 +109,12 @@ class FootstepPlanner
         ///
         void _writePlannerOutput(double time, std::vector<FootLocation> plan);
         double frand(double fMin, double fMax);
+
+        int* _getEnvironmentMap(vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles);
+        float _getDiscretizationResolution(vector<FootConstraint> constraints);
+        Eigen::Vector2i _getMapCoord(Eigen::Vector2d worldCoord);
+        Eigen::Vector2d _getWorldCoord(Eigen::Vector2i mapCoord);
+
         Eigen::Vector2d _getNextRandomPoint(FootLocation* lastFootNode);
         Eigen::Vector2d _getRandomLocation();
         FootLocation* _getRandomFootLocation(std::vector<FootConstraint> constraints, std::vector<Line> obstacles, FootLocation flStanceFoot, Eigen::Vector2d randomPoint);
