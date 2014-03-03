@@ -43,6 +43,7 @@
  */
 
 #include "FootstepPlanner.h"
+#include <queue>
 #define DISPLAY_SOLUTION
 
 using namespace fsp;
@@ -695,8 +696,92 @@ Vector2d FootstepPlanner::_getWorldCoord(Vector2i mapCoord)
 vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
     // TODO: Mohit, add the R Star Planner here
+		//Start out with the initial state in the queue. 
+		std::priority_queue<FootLocationNode> path_queue;
+		//Tree which will contain all the desired nodes 
+		FootLocationnode r_star_tree;
+
+		//Boolean value to check for the goal value. 
+		bool is_goal_reached = false;
+		path_queue.push(new FootLocationNode(currentLocation, &_Feet));
+
+		while(!is_goal_reached) {
+				//Start by expanding the first node from the priority queue. 
+				FootLocationNode curent_goal = path_queue.top();
+				path_queue.pop();
+				//If there is no path to this node, and its not avoid, then find the path to the node. 
+				if (current_goal.path == false) {
+						//Send the parent of the current goal along with the current start to get the path using weighted a_star.
+						//This function would mark the path as avoid in the following two situations...
+						//1) If the number of states expanded goes beyond some number, 2) If the cost of the path becomes ridiculous.    
+						find_path_using_weighted_a_star(&(current_goal.parent), current_goal);
+				}
+				//If a path has been found, check for the final goal. Also, add k more states...  
+				if (current_goal.should_avoid == false) {
+						if (current_goal.is_end()) {
+								is_goal_reached = true;
+						} else {
+								// if the goal has not been reached, do attach k more states to the queue,
+								for (int i=0;i< 10;i++) {
+										path_queue.push(get_random_goal(current_goal), 10);
+								}
+								//Add the goal in case its within the range..  
+								if (get_euclid_dist(current_goal, goalLocation) < 10) {
+										path_queue.push(get_random_goal(current_goal), 10);
+								}
+						}
+				}
+		}
+
+		//Creating the final path,and putting it in a vector.
+		Vector<FootLocation> finalPath;
+		while (current_goal.parent!=NULL) {
+			finalPath.push(current_goal.getFootLocation());	
+		}
+
+		return finalPath; 
 }
 
+///
+/// \brief FootstepPlanner::weighted_astar_search()
+/// \param constraints
+/// \param currentLocation
+/// \param goalLocation
+/// \param obstacles
+/// \return
+///
+void find_path_using_weighted_a_star(FootLocationNode* parent, FootLocationNode goal, int desired_weight) {
+		//Start out with the initial state in the queue. 
+		std::priority_queue<FootLocationNode> path_queue;
+		//Boolean value to check for the goal value. 
+		bool is_goal_reached = false;
+		path_queue.push(new FootLocationNode(currentLocation, &_Feet));
+		
+		while (true) {
+				//Start by expanding the first node from the priority queue. 
+				FootLocationNode curent_node = path_queue.top();
+				path_queue.pop();
+
+				if ((current_node.getLocation()[0]==goal.getLocation()[0]) &&(current_node.getLocation()[1]==goal.getLocation[1])) {
+						//Goal has been reached.
+						return; 
+				}
+				//Explore from the current node.We add the heuristic towards the goal while adding steps and then push accordingly. 
+				add_possible_steps(&current_node);
+				//Add the goal in case its within the range..  
+				if (get_euclid_dist(current_goal, goalLocation) < 10) {
+						path_queue.push(get_random_goal(current_goal), 10);
+				}
+		}
+}
+
+public void add_possible_steps(FootLocationNode* parent) {
+		//For now, add some specific values, and also be vary of the obstacles...
+}
+
+///
+/// \brief FootstepPlanner::getStaticPlan
+/// \return
 ///
 /// \brief FootstepPlanner::getStaticPlan
 /// \return
