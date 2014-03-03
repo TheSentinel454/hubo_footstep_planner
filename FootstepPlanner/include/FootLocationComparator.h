@@ -2,8 +2,8 @@
  * Copyright (c) 2014, Georgia Tech Research Corporation
  * All rights reserved.
  *
- * Author: Luke Tornquist <luke.tornquist@gatech.edu>
- * Date: Jan 2014
+ * Author: Mohit Khatri <mkhatri7@gatech.edu>
+ * Date: Mar 2014
  *
  * Humanoid Robotics Lab      Georgia Institute of Technology
  * Director: Mike Stilman     http://www.golems.org
@@ -42,26 +42,33 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FOOT_H
-#define FOOT_H
+#ifndef COMPARATOR_H
+#define COMPARATOR_H
 
-#include <string>
+#include <math.h>
 
 namespace fsp {
 
 /*!
-  * \class Foot
-  * \brief A Foot keeps track of the basic parameters in regard to a foot, such as Length and Width.
+  * \class FootLocationComparator
+  * \brief Comparator used by the priority queue. Compares the given nodes based on their distance to the goal location. 
   *
   *
   */
 class FootLocationComparator
 {
     public:
-		bool operator() (FootLocationNode& lhs, FootLocationNode& rhs) {
+		bool operator() (FootLocationNode* lhs, FootLocationNode* rhs, FootLocationNode* goal) {
+				bool result = false;
+				//Find the lhs distance to the goal. 
+				lhs_distance = sqrt(pow(((goal.getLocation())[0] - (lhs.getLocation())[0]), 2.0) + pow(((goal.getLocation())[1] - (lhs.getLocation())[1]), 2.0));	
+				rhs_distance = sqrt(pow(((goal.getLocation())[0] - (rhs.getLocation())[0]), 2.0) + pow(((goal.getLocation())[1] - (rhs.getLocation())[1]), 2.0));	
+				if (lhs_distance <=rhs_distance) {
+						result = true;
+				}
+				return result;
 		}
 
-    private:
     };
 } // namespace fsp
 
