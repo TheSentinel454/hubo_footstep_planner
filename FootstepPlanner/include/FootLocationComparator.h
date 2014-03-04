@@ -58,7 +58,11 @@ namespace fsp {
 class FootLocationComparator
 {
     public:
-		bool operator() (FootLocationNode* lhs, FootLocationNode* rhs, FootLocationNode* goal) {
+		FootLocationComparator(FootLocationNode* value) {
+				goal = value;
+		} 
+
+		bool operator() (const FootLocationNode& lhs, const FootLocationNode& rhs) const {
 				bool result = false;
 				//Find the lhs distance to the goal. 
 				lhs_distance = sqrt(pow(((goal.getLocation())[0] - (lhs.getLocation())[0]), 2.0) + pow(((goal.getLocation())[1] - (lhs.getLocation())[1]), 2.0));	
@@ -68,6 +72,9 @@ class FootLocationComparator
 				}
 				return result;
 		}
+
+		private:
+		FootLocationNode* goal;
 
     };
 } // namespace fsp
