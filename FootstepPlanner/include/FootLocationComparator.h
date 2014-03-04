@@ -46,6 +46,11 @@
 #define COMPARATOR_H
 
 #include <math.h>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
+#include <iostream>
+#include <vector>
+
 
 namespace fsp {
 
@@ -53,20 +58,19 @@ namespace fsp {
   * \class FootLocationComparator
   * \brief Comparator used by the priority queue. Compares the given nodes based on their distance to the goal location. 
   *
-  *
   */
 class FootLocationComparator
 {
     public:
-		FootLocationComparator(FootLocationNode* value) {
+		FootLocationComparator(Eigen::Vector2d value) {
 				goal = value;
 		} 
 
 		bool operator() (const FootLocationNode& lhs, const FootLocationNode& rhs) const {
 				bool result = false;
 				//Find the lhs distance to the goal. 
-				lhs_distance = sqrt(pow(((goal.getLocation())[0] - (lhs.getLocation())[0]), 2.0) + pow(((goal.getLocation())[1] - (lhs.getLocation())[1]), 2.0));	
-				rhs_distance = sqrt(pow(((goal.getLocation())[0] - (rhs.getLocation())[0]), 2.0) + pow(((goal.getLocation())[1] - (rhs.getLocation())[1]), 2.0));	
+				lhs_distance = sqrt(pow((goal[0] - lhs.getLocation()[0]), 2.0) + pow((goal[1] - lhs.getLocation()[1]), 2.0));	
+				lhs_distance = sqrt(pow((goal[0] - rhs.getLocation()[0]), 2.0) + pow((goal[1] - rhs.getLocation()[1]), 2.0));	
 				if (lhs_distance <=rhs_distance) {
 						result = true;
 				}
@@ -74,8 +78,7 @@ class FootLocationComparator
 		}
 
 		private:
-		FootLocationNode* goal;
-
+		Eigen::Vector2d goal;
     };
 } // namespace fsp
 

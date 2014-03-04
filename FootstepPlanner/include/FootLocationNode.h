@@ -55,7 +55,7 @@ namespace fsp {
 /*!
   * \class FootLocationNode
   * \brief A FootLocationNode keeps track of the foot location, angle, and a reference to a foot.
-  *
+  * \brief shouldAvoid parameter tells the planner if it should avoid this node or not.  
   *
   */
 class FootLocationNode
@@ -77,12 +77,18 @@ class FootLocationNode
         void setParent(FootLocationNode* parent);
         void addChild(FootLocationNode* child);
         void addChild(FootLocation& child, std::vector<Foot>* feet);
+				bool shouldAvoid() const;
+				void setShouldAvoid(bool shouldAvoid);
+				bool doesPathExist() const;
+				void setDoesPathExist(bool doesPathExist); 
     protected:
 
     private:
         fsp::FootLocation _Location;
         FootLocationNode* _Parent;
         std::vector<FootLocationNode*> _Children;
+				bool _shouldAvoid;
+				bool _doesPathExist;
     };
 } // namespace fsp
 

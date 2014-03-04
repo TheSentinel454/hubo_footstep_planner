@@ -685,6 +685,7 @@ Vector2d FootstepPlanner::_getWorldCoord(Vector2i mapCoord)
                     (mapCoord[1] * DISCRETIZATION_RES) - INV_MIN_POINT[1]);
 }
 
+
 ///
 /// \brief FootstepPlanner::runRStarPlanner
 /// \param constraints
@@ -694,10 +695,10 @@ Vector2d FootstepPlanner::_getWorldCoord(Vector2i mapCoord)
 /// \return
 ///
 vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
-{
+{/*
     // TODO: Mohit, add the R Star Planner here
-		//Start out with the initial state in the queue. 
-		std::priority_queue<FootLocationNode> path_queue;
+		//Start out with the initial state in the queue.
+		std::priority_queue<FootLocationNode, std::vector<FootLocationNode>, FootLocationComparator> path_queue(FootLocationComparator(goalLocation));
 		//Tree which will contain all the desired nodes 
 		FootLocationnode r_star_tree;
 
@@ -710,7 +711,7 @@ vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> con
 				FootLocationNode curent_goal = path_queue.top();
 				path_queue.pop();
 				//If there is no path to this node, and its not avoid, then find the path to the node. 
-				if (current_goal.path == false) {
+				if (current_goal.doesPathExist() == false) {
 						//Send the parent of the current goal along with the current start to get the path using weighted a_star.
 						//This function would mark the path as avoid in the following two situations...
 						//1) If the number of states expanded goes beyond some number, 2) If the cost of the path becomes ridiculous.    
@@ -739,9 +740,10 @@ vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> con
 			finalPath.push(current_goal.getFootLocation());	
 		}
 
-		return finalPath; 
+		return finalPath;*/ 
 }
 
+/*
 ///
 /// \brief FootstepPlanner::weighted_astar_search()
 /// \param constraints
@@ -752,7 +754,7 @@ vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> con
 ///
 void find_path_using_weighted_a_star(FootLocationNode* parent, FootLocationNode goal, int desired_weight) {
 		//Start out with the initial state in the queue. 
-		std::priority_queue<FootLocationNode> path_queue;
+		std::priority_queue<FootLocationNode, std::vector<FootLocationNode>, FootLocationComparator> path_queue(FootLocationComparator(goal.getLocation()));
 		//Boolean value to check for the goal value. 
 		bool is_goal_reached = false;
 		path_queue.push(new FootLocationNode(currentLocation, &_Feet));
@@ -774,8 +776,9 @@ void find_path_using_weighted_a_star(FootLocationNode* parent, FootLocationNode 
 				}
 		}
 }
+*/
 
-public void add_possible_steps(FootLocationNode* parent) {
+void add_possible_steps(FootLocationNode* parent) {
 		//For now, add some specific values, and also be vary of the obstacles...
 }
 
