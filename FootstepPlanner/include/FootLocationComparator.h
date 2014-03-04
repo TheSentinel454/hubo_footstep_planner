@@ -66,11 +66,11 @@ class FootLocationComparator
 				goal = value;
 		} 
 
-		bool operator() (const FootLocationNode& lhs, const FootLocationNode& rhs) const {
+		bool operator() (const FootLocationNode* lhs, const FootLocationNode* rhs) const {
 				bool result = false;
 				//Find the lhs distance to the goal. 
-				lhs_distance = sqrt(pow((goal[0] - lhs.getLocation()[0]), 2.0) + pow((goal[1] - lhs.getLocation()[1]), 2.0));	
-				lhs_distance = sqrt(pow((goal[0] - rhs.getLocation()[0]), 2.0) + pow((goal[1] - rhs.getLocation()[1]), 2.0));	
+				double lhs_distance = sqrt(pow((goal[0] - (lhs->getLocation())[0]), 2.0) + pow((goal[1] - (lhs->getLocation())[1]), 2.0));	
+				double rhs_distance = sqrt(pow((goal[0] - (rhs->getLocation())[0]), 2.0) + pow((goal[1] - (rhs->getLocation())[1]), 2.0));	
 				if (lhs_distance <=rhs_distance) {
 						result = true;
 				}

@@ -43,7 +43,9 @@
  */
 
 #include "FootstepPlanner.h"
+#include "FootLocationComparator.h"
 #include <queue>
+#include <cstdlib>
 #define DISPLAY_SOLUTION
 
 using namespace fsp;
@@ -695,55 +697,92 @@ Vector2d FootstepPlanner::_getWorldCoord(Vector2i mapCoord)
 /// \return
 ///
 vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
-{/*
+{
     // TODO: Mohit, add the R Star Planner here
 		//Start out with the initial state in the queue.
-		std::priority_queue<FootLocationNode, std::vector<FootLocationNode>, FootLocationComparator> path_queue(FootLocationComparator(goalLocation));
+		std::priority_queue<FootLocationNode*, std::vector<FootLocationNode*>, FootLocationComparator> path_queue(FootLocationComparator(goalLocation[0].getLocation()));
 		//Tree which will contain all the desired nodes 
-		FootLocationnode r_star_tree;
+		FootLocationNode* r_star_tree;
 
 		//Boolean value to check for the goal value. 
 		bool is_goal_reached = false;
-		path_queue.push(new FootLocationNode(currentLocation, &_Feet));
+		r_star_tree  = new FootLocationNode(currentLocation[0], &_Feet);
+		r_star_tree->setDoesPathExist(true);
+		path_queue.push(r_star_tree);
+		FootLocationNode* current_goal;
 
 		while(!is_goal_reached) {
 				//Start by expanding the first node from the priority queue. 
-				FootLocationNode curent_goal = path_queue.top();
+				current_goal = path_queue.top();
 				path_queue.pop();
 				//If there is no path to this node, and its not avoid, then find the path to the node. 
-				if (current_goal.doesPathExist() == false) {
+				if (current_goal->doesPathExist() == false) {
 						//Send the parent of the current goal along with the current start to get the path using weighted a_star.
 						//This function would mark the path as avoid in the following two situations...
 						//1) If the number of states expanded goes beyond some number, 2) If the cost of the path becomes ridiculous.    
-						find_path_using_weighted_a_star(&(current_goal.parent), current_goal);
+						find_path_using_weighted_a_star(current_goal->getParent(), current_goal, 2, obstacles);
 				}
 				//If a path has been found, check for the final goal. Also, add k more states...  
-				if (current_goal.should_avoid == false) {
-						if (current_goal.is_end()) {
+				if (current_goal->shouldAvoid() == false) {
+						if (current_goal->getLocation()[0] == (goalLocation[0].getLocation())[0] && current_goal->getLocation()[1] == (goalLocation[0].getLocation())[1]) {
 								is_goal_reached = true;
 						} else {
 								// if the goal has not been reached, do attach k more states to the queue,
 								for (int i=0;i< 10;i++) {
-										path_queue.push(get_random_goal(current_goal), 10);
+										//For now, just generate numbers within the range of one to 10 w.r.t the current Location.
+										FootLocationNode* child = get_random_goal(current_goal, 10, obstacles);
+										child->setParent(current_goal);
+										current_goal->addChild(child); 
+										path_queue.push(child);
 								}
 								//Add the goal in case its within the range..  
-								if (get_euclid_dist(current_goal, goalLocation) < 10) {
-										path_queue.push(get_random_goal(current_goal), 10);
+								if (get_euclid_distance(current_goal, goalLocation[0]) < 10) {
+										FootLocationNode* child = new FootLocationNode(goalLocation[0], &_Feet);
+										child->setParent(current_goal);
+										current_goal->addChild(child); 
+										path_queue.push(child);
 								}
 						}
 				}
 		}
 
 		//Creating the final path,and putting it in a vector.
-		Vector<FootLocation> finalPath;
-		while (current_goal.parent!=NULL) {
-			finalPath.push(current_goal.getFootLocation());	
+		vector<FootLocation> finalPath;
+		while (current_goal->getParent()!=NULL) {
+			finalPath.push_back(current_goal->getFootLocation());	
+		  current_goal = current_goal->getParent(); 
 		}
 
-		return finalPath;*/ 
+		return finalPath;
 }
 
-/*
+///
+/// \brief FootstepPlanner::get_random_goal
+/// \param FootLocationNode
+/// \param goalLocation
+/// \return a node radius distance away from the current location. 
+///
+FootLocationNode* FootstepPlanner::get_random_goal(FootLocationNode* currentLocation, int radius, vector<Line> obstacles) {
+		//generate a random point along a circle centered at current location, and radius given.
+	  double angle = 6.28 * ((double)rand() / RAND_MAX);
+		//generate a point with this angle at the radius distance. 
+		//TO DO : Add the obstacle check here...that would help a lot. 
+		Vector2d newLocation  = Vector2d((currentLocation->getLocation()[0] + radius*cos(angle)), (currentLocation->getLocation()[1] + radius*sin(angle)));
+		FootLocationNode* newFootLocation  = new FootLocationNode(newLocation, 0.0f, 1, &_Feet);
+		return newFootLocation;
+}
+
+///
+/// \brief FootstepPlanner::get_euclid_distance
+/// \param FootLocationNode
+/// \param goalLocation
+/// \return distance between the two locations.
+///
+double FootstepPlanner::get_euclid_distance(FootLocationNode* node, FootLocation footLocation) {
+		Eigen::Vector2d location = footLocation.getLocation();
+		return  sqrt(pow((node->getLocation()[0] - location[0]), 2.0) + pow((node->getLocation()[1] - location[1]), 2.0));
+}
+
 ///
 /// \brief FootstepPlanner::weighted_astar_search()
 /// \param constraints
@@ -752,7 +791,8 @@ vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> con
 /// \param obstacles
 /// \return
 ///
-void find_path_using_weighted_a_star(FootLocationNode* parent, FootLocationNode goal, int desired_weight) {
+void FootstepPlanner::find_path_using_weighted_a_star(FootLocationNode* parent, FootLocationNode* goal, int desired_weight, vector<Line> obstacles) {
+	/*	
 		//Start out with the initial state in the queue. 
 		std::priority_queue<FootLocationNode, std::vector<FootLocationNode>, FootLocationComparator> path_queue(FootLocationComparator(goal.getLocation()));
 		//Boolean value to check for the goal value. 
@@ -775,8 +815,9 @@ void find_path_using_weighted_a_star(FootLocationNode* parent, FootLocationNode 
 						path_queue.push(get_random_goal(current_goal), 10);
 				}
 		}
-}
 */
+}
+
 
 void add_possible_steps(FootLocationNode* parent) {
 		//For now, add some specific values, and also be vary of the obstacles...
