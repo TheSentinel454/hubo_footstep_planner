@@ -763,13 +763,41 @@ vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> con
 /// \return a node radius distance away from the current location. 
 ///
 FootLocationNode* FootstepPlanner::get_random_goal(FootLocationNode* currentLocation, int radius, vector<Line> obstacles) {
-		//generate a random point along a circle centered at current location, and radius given.
-	  double angle = 6.28 * ((double)rand() / RAND_MAX);
-		//generate a point with this angle at the radius distance. 
-		//TO DO : Add the obstacle check here...that would help a lot. 
-		Vector2d newLocation  = Vector2d((currentLocation->getLocation()[0] + radius*cos(angle)), (currentLocation->getLocation()[1] + radius*sin(angle)));
-		FootLocationNode* newFootLocation  = new FootLocationNode(newLocation, 0.0f, 1, &_Feet);
+		bool collision = true;
+		FootLocationNode* newFootLocation = NULL;
+		while (collision) {
+				//generate a random point along a circle centered at current location, and radius given.
+				double angle = 6.28 * ((double)rand() / RAND_MAX);
+				//generate a point with this angle at the radius distance. 
+				Vector2d newLocation  = Vector2d((currentLocation->getLocation()[0] + radius*cos(angle)), (currentLocation->getLocation()[1] + radius*sin(angle)));	
+				FootLocation footLocation = FootLocation(newLocation, 0.0f, 1, &_Feet);
+				if (_isCollision(footLocation, NULL, obstacles) == false) {
+						newFootLocation  = new FootLocationNode(footLocation, &_Feet);
+						collision = false;
+				}	
+		}
 		return newFootLocation;
+}
+
+///
+/// \brief FootstepPlanner::get_random_goal
+/// \param FootLocationNode
+/// \param goalLocation
+/// \return a node radius distance away from the current location. 
+///
+vector<FootLocationNode*> FootstepPlanner::get_possible_configurations(FootLocationNode* currentLocation, int radius, vector<Line> obstacles, int num_config) {
+		double interval = 6.28/num_config;
+		vector<FootLocationNode*> footLocations;
+		for (int i = 1;i <= num_config;i++) {
+				double current_angle = i*interval;
+				Vector2d newLocation  = Vector2d((currentLocation->getLocation()[0] + radius*cos(current_angle)), (currentLocation->getLocation()[1] + radius*sin(current_angle)));
+				FootLocation footLocation = FootLocation(newLocation, 0.0f, 1, &_Feet);
+				if (_isCollision(footLocation, NULL, obstacles) == false) {
+						FootLocationNode* newFootLocation  = new FootLocationNode(footLocation,&_Feet);
+						footLocations.push_back(newFootLocation);
+				}
+		}
+		return footLocations;
 }
 
 ///
@@ -919,7 +947,7 @@ FootLocation* FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> con
         FootLocation flFootConfig = _generateRandomFootConfig(previousFootIndex, nextFootIndex, constraints, flStanceFoot, randomPoint);
         cout << "Random Foot Config Success: " << iteration << endl;
         // Check for collision
-        if (_isCollision(flFootConfig, flStanceFoot, obstacles))
+        if (_isCollision(flFootConfig, &flStanceFoot, obstacles))
         {
             cout << "Collision!" << endl;
             iteration++;
@@ -1018,10 +1046,12 @@ double FootstepPlanner::frand(double fMin, double fMax)
 /// \param obstacles
 /// \return
 ///
-bool FootstepPlanner::_isCollision(const FootLocation& flFootConfig, const FootLocation& flStanceFoot, vector<Line> obstacles)
+bool FootstepPlanner::_isCollision(const FootLocation& flFootConfig, const FootLocation* flStanceFoot, vector<Line> obstacles)
 {
     // Check for collision with nearest neighbor
-    if (flFootConfig.isCollision(flStanceFoot))
+		// flStanceFoot is going to be null in cases where i just want to check collision with obstacles. 
+		// In such cases, isCollision shouldnt be called as its going to dereference this pointer, and that will result n BRUHAHA
+    if (flStanceFoot != NULL && flFootConfig.isCollision(*flStanceFoot))
         // Collision
         return true;
     // No collision with nearest neighbor

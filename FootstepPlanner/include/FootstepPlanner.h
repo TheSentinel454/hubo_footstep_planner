@@ -121,12 +121,13 @@ class FootstepPlanner
         FootLocation* _getRandomFootLocation(std::vector<FootConstraint> constraints, std::vector<Line> obstacles, FootLocation flStanceFoot, Eigen::Vector2d randomPoint);
         Eigen::Vector2d _findNearestNeighbor(Eigen::Vector2d location, flann::Index< flann::L2<double> > points);
         FootLocationNode* _findFootLocationNode(Eigen::Vector2d location, fsp::FootLocationNode* root);
-        bool _isCollision(const fsp::FootLocation& flFootConfig, const fsp::FootLocation& flStanceFoot, std::vector<Line> obstacles);
+        bool _isCollision(const fsp::FootLocation& flFootConfig, const fsp::FootLocation* flStanceFoot, std::vector<Line> obstacles);
         void _updateRandomMinMaxValues(double xValue, double yValue);
         FootLocation _generateRandomFootConfig(int previousFootIndex, int nextFootIndex, const std::vector<FootConstraint>& constraints, fsp::FootLocation flStanceFoot, Eigen::Vector2d randomPoint);
 				double get_euclid_distance(FootLocationNode* node, FootLocation footLocation);
 				void find_path_using_weighted_a_star(FootLocationNode* parent, FootLocationNode* goal, int desired_weight, vector<Line> obstacles);
 				FootLocationNode* get_random_goal(FootLocationNode* currentLocation, int radius, vector<Line> obstacles); 
+				vector<FootLocationNode*> get_possible_configurations(FootLocationNode* currentLocation, int radius, vector<Line> obstacles, int num_config);
         double _minimumRandomX;
         double _maximumRandomX;
         double _minimumRandomY;
