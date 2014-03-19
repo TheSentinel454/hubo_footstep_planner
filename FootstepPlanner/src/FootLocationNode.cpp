@@ -48,27 +48,21 @@ using namespace fsp;
 using namespace std;
 using namespace Eigen;
 
-FootLocationNode::FootLocationNode(){
-		_shouldAvoid = false;}
+FootLocationNode::FootLocationNode()
+{
+    _shouldAvoid = false;
+}
 
 FootLocationNode::FootLocationNode(FootLocation& location, vector<Foot>* feet)
 {
-<<<<<<< HEAD
     _Location = FootLocation(location.getLocation(), location.getWorldTheta(), location.getTheta(), location.getFootIndex(), feet);
-=======
-    _Location = FootLocation(location.getLocation(), location.getTheta(), location.getFootIndex(), feet);
-		_shouldAvoid = false;
->>>>>>> be7700722cc83af7e35f0e26fb86b2b6698f3729
+    _shouldAvoid = false;
 }
 
 FootLocationNode::FootLocationNode(Vector2d location, float worldTheta, float theta, int footIndex, vector<Foot>* feet)
 {
-<<<<<<< HEAD
     _Location = FootLocation(location, worldTheta, theta, footIndex, feet);
-=======
-    _Location = FootLocation(location, theta, footIndex, feet);
-		_shouldAvoid = false;
->>>>>>> be7700722cc83af7e35f0e26fb86b2b6698f3729
+    _shouldAvoid = false;
 }
 
 FootLocationNode::~FootLocationNode()

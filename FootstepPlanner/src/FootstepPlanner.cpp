@@ -1046,29 +1046,29 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                 deltaChange = (DISCRETIZATION_RES/2.0d) / iterations;
 
                 // First step
-                if (mapPlan[a-1][0] > mapPlan[a][0])
+                if (mapPlan[i-1][0] > mapPlan[i][0])
                     // Decrease X
                     xChange = -1;
-                else if (mapPlan[a-1][0] < mapPlan[a][0])
+                else if (mapPlan[i-1][0] < mapPlan[i][0])
                     // Increase X
                     xChange = 1;
-                else if (mapPlan[a-1][1] < mapPlan[a][1])
+                else if (mapPlan[i-1][1] < mapPlan[i][1])
                     // Increase Y
                     yChange = 1;
-                else if (mapPlan[a-1][1] > mapPlan[a][1])
+                else if (mapPlan[i-1][1] > mapPlan[i][1])
                     // Decrease Y
                     yChange = -1;
                 // Second step
-                if (mapPlan[a][0] > mapPlan[a+1][0])
+                if (mapPlan[i][0] > mapPlan[i+1][0])
                     // Decrease X
                     xChange = -1;
-                else if (mapPlan[a][0] < mapPlan[a+1][0])
+                else if (mapPlan[i][0] < mapPlan[i+1][0])
                     // Increase X
                     xChange = 1;
-                else if (mapPlan[a][1] < mapPlan[a+1][1])
+                else if (mapPlan[i][1] < mapPlan[i+1][1])
                     // Increase Y
                     yChange = 1;
-                else if (mapPlan[a][1] > mapPlan[a+1][1])
+                else if (mapPlan[i][1] > mapPlan[i+1][1])
                     // Decrease Y
                     yChange = -1;
 
@@ -1871,7 +1871,7 @@ FootLocationNode* FootstepPlanner::get_random_goal(FootLocationNode* currentLoca
 				double angle = 6.28 * ((double)rand() / RAND_MAX);
 				//generate a point with this angle at the radius distance. 
 				Vector2d newLocation  = Vector2d((currentLocation->getLocation()[0] + radius*cos(angle)), (currentLocation->getLocation()[1] + radius*sin(angle)));	
-				FootLocation footLocation = FootLocation(newLocation, 0.0f, 1, &_Feet);
+                FootLocation footLocation = FootLocation(newLocation, 0.0f, 0.0f, 1, &_Feet);
 				if (_isCollision(footLocation, NULL, obstacles) == false) {
 						newFootLocation  = new FootLocationNode(footLocation, &_Feet);
 						collision = false;
@@ -1892,7 +1892,7 @@ vector<FootLocationNode*> FootstepPlanner::get_possible_configurations(FootLocat
 		for (int i = 1;i <= num_config;i++) {
 				double current_angle = i*interval;
 				Vector2d newLocation  = Vector2d((currentLocation->getLocation()[0] + radius*cos(current_angle)), (currentLocation->getLocation()[1] + radius*sin(current_angle)));
-				FootLocation footLocation = FootLocation(newLocation, 0.0f, 1, &_Feet);
+                FootLocation footLocation = FootLocation(newLocation, 0.0f, 0.0f, 1, &_Feet);
 				if (_isCollision(footLocation, NULL, obstacles) == false) {
 						FootLocationNode* newFootLocation  = new FootLocationNode(footLocation,&_Feet);
 						footLocations.push_back(newFootLocation);
