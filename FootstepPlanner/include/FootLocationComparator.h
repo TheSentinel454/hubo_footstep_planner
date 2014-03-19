@@ -2,8 +2,8 @@
  * Copyright (c) 2014, Georgia Tech Research Corporation
  * All rights reserved.
  *
- * Author: Luke Tornquist <luke.tornquist@gatech.edu>
- * Date: Jan 2014
+ * Author: Mohit Khatri <mkhatri7@gatech.edu>
+ * Date: Mar 2014
  *
  * Humanoid Robotics Lab      Georgia Institute of Technology
  * Director: Mike Stilman     http://www.golems.org
@@ -42,55 +42,44 @@
  *   POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef FOOTLOCATIONNODE_H
-#define FOOTLOCATIONNODE_H
+#ifndef COMPARATOR_H
+#define COMPARATOR_H
 
+#include <math.h>
 #include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Geometry>
+#include <iostream>
 #include <vector>
 
-#include "FootLocation.h"
 
 namespace fsp {
 
 /*!
-  * \class FootLocationNode
-  * \brief A FootLocationNode keeps track of the foot location, angle, and a reference to a foot.
-  * \brief shouldAvoid parameter tells the planner if it should avoid this node or not.  
+  * \class FootLocationComparator
+  * \brief Comparator used by the priority queue. Compares the given nodes based on their distance to the goal location. 
   *
   */
-class FootLocationNode
+class FootLocationComparator
 {
     public:
-        FootLocationNode();
-        FootLocationNode(fsp::FootLocation& location, std::vector<Foot>* feet);
-        FootLocationNode(Eigen::Vector2d location, float worldTheta, float theta, int footIndex, std::vector<Foot>* feet);
-        ~FootLocationNode();
+		FootLocationComparator(Eigen::Vector2d value) {
+				goal = value;
+		} 
 
-        FootLocation getFootLocation() const;
-        Eigen::Vector2d getLocation() const;
-        float getTheta() const;
-        int getFootIndex() const;
-        std::vector<Line> getBounds() const;
-        std::vector<FootLocationNode*> getChildren() const;
-        FootLocationNode* getChild(int index) const;
-        FootLocationNode* getParent() const;
-        void setParent(FootLocationNode* parent);
-        void addChild(FootLocationNode* child);
-        void addChild(FootLocation& child, std::vector<Foot>* feet);
-				bool shouldAvoid() const;
-				void setShouldAvoid(bool shouldAvoid);
-				bool doesPathExist() const;
-				void setDoesPathExist(bool doesPathExist); 
-    protected:
+		bool operator() (const FootLocationNode* lhs, const FootLocationNode* rhs) const {
+				bool result = false;
+				//Find the lhs distance to the goal. 
+				double lhs_distance = sqrt(pow((goal[0] - (lhs->getLocation())[0]), 2.0) + pow((goal[1] - (lhs->getLocation())[1]), 2.0));	
+				double rhs_distance = sqrt(pow((goal[0] - (rhs->getLocation())[0]), 2.0) + pow((goal[1] - (rhs->getLocation())[1]), 2.0));	
+				if (lhs_distance <=rhs_distance) {
+						result = true;
+				}
+				return result;
+		}
 
-    private:
-        fsp::FootLocation _Location;
-        FootLocationNode* _Parent;
-        std::vector<FootLocationNode*> _Children;
-				bool _shouldAvoid;
-				bool _doesPathExist;
+		private:
+		Eigen::Vector2d goal;
     };
 } // namespace fsp
-
 
 #endif

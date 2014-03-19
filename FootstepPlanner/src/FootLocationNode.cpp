@@ -48,16 +48,27 @@ using namespace fsp;
 using namespace std;
 using namespace Eigen;
 
-FootLocationNode::FootLocationNode(){}
+FootLocationNode::FootLocationNode(){
+		_shouldAvoid = false;}
 
 FootLocationNode::FootLocationNode(FootLocation& location, vector<Foot>* feet)
 {
+<<<<<<< HEAD
     _Location = FootLocation(location.getLocation(), location.getWorldTheta(), location.getTheta(), location.getFootIndex(), feet);
+=======
+    _Location = FootLocation(location.getLocation(), location.getTheta(), location.getFootIndex(), feet);
+		_shouldAvoid = false;
+>>>>>>> be7700722cc83af7e35f0e26fb86b2b6698f3729
 }
 
 FootLocationNode::FootLocationNode(Vector2d location, float worldTheta, float theta, int footIndex, vector<Foot>* feet)
 {
+<<<<<<< HEAD
     _Location = FootLocation(location, worldTheta, theta, footIndex, feet);
+=======
+    _Location = FootLocation(location, theta, footIndex, feet);
+		_shouldAvoid = false;
+>>>>>>> be7700722cc83af7e35f0e26fb86b2b6698f3729
 }
 
 FootLocationNode::~FootLocationNode()
@@ -72,6 +83,8 @@ float FootLocationNode::getTheta() const { return _Location.getWorldTheta(); }
 int FootLocationNode::getFootIndex() const { return _Location.getFootIndex(); }
 vector<Line> FootLocationNode::getBounds() const { return _Location.getBounds(); }
 vector<FootLocationNode*> FootLocationNode::getChildren() const { return _Children; }
+bool FootLocationNode::shouldAvoid() const {return _shouldAvoid;}
+bool FootLocationNode::doesPathExist() const {return _doesPathExist;}
 
 FootLocationNode* FootLocationNode::getChild(int index) const
 {
@@ -104,4 +117,12 @@ void FootLocationNode::addChild(FootLocation& child, vector<Foot>* feet)
     newNode->setParent(this);
     // Add the child
     _Children.push_back(newNode);
+}
+
+void FootLocationNode::setShouldAvoid(bool shouldAvoid) {
+		_shouldAvoid = shouldAvoid;
+}
+
+void FootLocationNode::setDoesPathExist(bool doesPathExist) {
+		_doesPathExist = doesPathExist;
 }

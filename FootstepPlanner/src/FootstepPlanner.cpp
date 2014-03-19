@@ -43,6 +43,9 @@
  */
 
 #include "FootstepPlanner.h"
+#include "FootLocationComparator.h"
+#include <queue>
+#include <cstdlib>
 #define DISPLAY_SOLUTION
 
 using namespace fsp;
@@ -1785,6 +1788,7 @@ Vector2d FootstepPlanner::_getWorldCoord(Vector2i mapCoord)
                     (mapCoord[1] * DISCRETIZATION_RES) - INV_MIN_POINT[1]);
 }
 
+
 ///
 /// \brief FootstepPlanner::runRStarPlanner
 /// \param constraints
@@ -1796,8 +1800,161 @@ Vector2d FootstepPlanner::_getWorldCoord(Vector2i mapCoord)
 vector<FootLocation> FootstepPlanner::runRStarPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles)
 {
     // TODO: Mohit, add the R Star Planner here
+		//Start out with the initial state in the queue.
+		std::priority_queue<FootLocationNode*, std::vector<FootLocationNode*>, FootLocationComparator> path_queue(FootLocationComparator(goalLocation[0].getLocation()));
+		//Tree which will contain all the desired nodes 
+		FootLocationNode* r_star_tree;
+
+		//Boolean value to check for the goal value. 
+		bool is_goal_reached = false;
+		r_star_tree  = new FootLocationNode(currentLocation[0], &_Feet);
+		r_star_tree->setDoesPathExist(true);
+		path_queue.push(r_star_tree);
+		FootLocationNode* current_goal;
+
+		while(!is_goal_reached) {
+				//Start by expanding the first node from the priority queue. 
+				current_goal = path_queue.top();
+				path_queue.pop();
+				//If there is no path to this node, and its not avoid, then find the path to the node. 
+				if (current_goal->doesPathExist() == false) {
+						//Send the parent of the current goal along with the current start to get the path using weighted a_star.
+						//This function would mark the path as avoid in the following two situations...
+						//1) If the number of states expanded goes beyond some number, 2) If the cost of the path becomes ridiculous.    
+						find_path_using_weighted_a_star(current_goal->getParent(), current_goal, 2, obstacles);
+				}
+				//If a path has been found, check for the final goal. Also, add k more states...  
+				if (current_goal->shouldAvoid() == false) {
+						if (current_goal->getLocation()[0] == (goalLocation[0].getLocation())[0] && current_goal->getLocation()[1] == (goalLocation[0].getLocation())[1]) {
+								is_goal_reached = true;
+						} else {
+								// if the goal has not been reached, do attach k more states to the queue,
+								for (int i=0;i< 10;i++) {
+										//For now, just generate numbers within the range of one to 10 w.r.t the current Location.
+										FootLocationNode* child = get_random_goal(current_goal, 10, obstacles);
+										child->setParent(current_goal);
+										current_goal->addChild(child); 
+										path_queue.push(child);
+								}
+								//Add the goal in case its within the range..  
+								if (get_euclid_distance(current_goal, goalLocation[0]) < 10) {
+										FootLocationNode* child = new FootLocationNode(goalLocation[0], &_Feet);
+										child->setParent(current_goal);
+										current_goal->addChild(child); 
+										path_queue.push(child);
+								}
+						}
+				}
+		}
+
+		//Creating the final path,and putting it in a vector.
+		vector<FootLocation> finalPath;
+		while (current_goal->getParent()!=NULL) {
+			finalPath.push_back(current_goal->getFootLocation());	
+		  current_goal = current_goal->getParent(); 
+		}
+
+		return finalPath;
 }
 
+///
+/// \brief FootstepPlanner::get_random_goal
+/// \param FootLocationNode
+/// \param goalLocation
+/// \return a node radius distance away from the current location. 
+///
+FootLocationNode* FootstepPlanner::get_random_goal(FootLocationNode* currentLocation, int radius, vector<Line> obstacles) {
+		bool collision = true;
+		FootLocationNode* newFootLocation = NULL;
+		while (collision) {
+				//generate a random point along a circle centered at current location, and radius given.
+				double angle = 6.28 * ((double)rand() / RAND_MAX);
+				//generate a point with this angle at the radius distance. 
+				Vector2d newLocation  = Vector2d((currentLocation->getLocation()[0] + radius*cos(angle)), (currentLocation->getLocation()[1] + radius*sin(angle)));	
+				FootLocation footLocation = FootLocation(newLocation, 0.0f, 1, &_Feet);
+				if (_isCollision(footLocation, NULL, obstacles) == false) {
+						newFootLocation  = new FootLocationNode(footLocation, &_Feet);
+						collision = false;
+				}	
+		}
+		return newFootLocation;
+}
+
+///
+/// \brief FootstepPlanner::get_random_goal
+/// \param FootLocationNode
+/// \param goalLocation
+/// \return a node radius distance away from the current location. 
+///
+vector<FootLocationNode*> FootstepPlanner::get_possible_configurations(FootLocationNode* currentLocation, int radius, vector<Line> obstacles, int num_config) {
+		double interval = 6.28/num_config;
+		vector<FootLocationNode*> footLocations;
+		for (int i = 1;i <= num_config;i++) {
+				double current_angle = i*interval;
+				Vector2d newLocation  = Vector2d((currentLocation->getLocation()[0] + radius*cos(current_angle)), (currentLocation->getLocation()[1] + radius*sin(current_angle)));
+				FootLocation footLocation = FootLocation(newLocation, 0.0f, 1, &_Feet);
+				if (_isCollision(footLocation, NULL, obstacles) == false) {
+						FootLocationNode* newFootLocation  = new FootLocationNode(footLocation,&_Feet);
+						footLocations.push_back(newFootLocation);
+				}
+		}
+		return footLocations;
+}
+
+///
+/// \brief FootstepPlanner::get_euclid_distance
+/// \param FootLocationNode
+/// \param goalLocation
+/// \return distance between the two locations.
+///
+double FootstepPlanner::get_euclid_distance(FootLocationNode* node, FootLocation footLocation) {
+		Eigen::Vector2d location = footLocation.getLocation();
+		return  sqrt(pow((node->getLocation()[0] - location[0]), 2.0) + pow((node->getLocation()[1] - location[1]), 2.0));
+}
+
+///
+/// \brief FootstepPlanner::weighted_astar_search()
+/// \param constraints
+/// \param currentLocation
+/// \param goalLocation
+/// \param obstacles
+/// \return
+///
+void FootstepPlanner::find_path_using_weighted_a_star(FootLocationNode* parent, FootLocationNode* goal, int desired_weight, vector<Line> obstacles) {
+	/*	
+		//Start out with the initial state in the queue. 
+		std::priority_queue<FootLocationNode, std::vector<FootLocationNode>, FootLocationComparator> path_queue(FootLocationComparator(goal.getLocation()));
+		//Boolean value to check for the goal value. 
+		bool is_goal_reached = false;
+		path_queue.push(new FootLocationNode(currentLocation, &_Feet));
+		
+		while (true) {
+				//Start by expanding the first node from the priority queue. 
+				FootLocationNode curent_node = path_queue.top();
+				path_queue.pop();
+
+				if ((current_node.getLocation()[0]==goal.getLocation()[0]) &&(current_node.getLocation()[1]==goal.getLocation[1])) {
+						//Goal has been reached.
+						return; 
+				}
+				//Explore from the current node.We add the heuristic towards the goal while adding steps and then push accordingly. 
+				add_possible_steps(&current_node);
+				//Add the goal in case its within the range..  
+				if (get_euclid_dist(current_goal, goalLocation) < 10) {
+						path_queue.push(get_random_goal(current_goal), 10);
+				}
+		}
+*/
+}
+
+
+void add_possible_steps(FootLocationNode* parent) {
+		//For now, add some specific values, and also be vary of the obstacles...
+}
+
+///
+/// \brief FootstepPlanner::getStaticPlan
+/// \return
 ///
 /// \brief FootstepPlanner::getStaticPlan
 /// \return
@@ -1891,7 +2048,7 @@ FootLocation* FootstepPlanner::_getRandomFootLocation(vector<FootConstraint> con
         FootLocation flFootConfig = _generateRandomFootConfig(previousFootIndex, nextFootIndex, constraints, flStanceFoot, randomPoint);
         cout << "Random Foot Config Success: " << iteration << endl;
         // Check for collision
-        if (_isCollision(flFootConfig, flStanceFoot, obstacles))
+        if (_isCollision(flFootConfig, &flStanceFoot, obstacles))
         {
             cout << "Collision!" << endl;
             iteration++;
@@ -1990,10 +2147,12 @@ double FootstepPlanner::frand(double fMin, double fMax)
 /// \param obstacles
 /// \return
 ///
-bool FootstepPlanner::_isCollision(const FootLocation& flFootConfig, const FootLocation& flStanceFoot, vector<Line> obstacles)
+bool FootstepPlanner::_isCollision(const FootLocation& flFootConfig, const FootLocation* flStanceFoot, vector<Line> obstacles)
 {
     // Check for collision with nearest neighbor
-    if (flFootConfig.isCollision(flStanceFoot))
+		// flStanceFoot is going to be null in cases where i just want to check collision with obstacles. 
+		// In such cases, isCollision shouldnt be called as its going to dereference this pointer, and that will result n BRUHAHA
+    if (flStanceFoot != NULL && flFootConfig.isCollision(*flStanceFoot))
         // Collision
         return true;
     // No collision with nearest neighbor
