@@ -82,7 +82,8 @@ bool Line::isCollision(Line line) const
     float numerator2 = ((_Start[1] - line.getStart()[1]) * (_End[0] - _Start[0])) - ((_Start[0] - line.getStart()[0]) * (_End[1] - _Start[1]));
 
     // Detect coincident lines
-    if (denominator == 0) return numerator1 == 0 && numerator2 == 0;
+    // TODO: I'm getting false positives here when the lines don't overlap...
+    //if (denominator == 0) return numerator1 == 0 && numerator2 == 0;
 
     float r = numerator1 / denominator;
     float s = numerator2 / denominator;

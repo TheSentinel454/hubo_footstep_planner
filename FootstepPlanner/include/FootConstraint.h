@@ -67,19 +67,19 @@ class FootConstraint
 
         int getFootIndex() const;
         int getRefFootIndex() const;
-        double getMinimumDeltaX() const;
-        double getMaximumDeltaX() const;
-        double getMinimumDeltaY() const;
-        double getMaximumDeltaY() const;
+        double getMinimumDeltaLength() const;
+        double getMaximumDeltaLength() const;
+        double getMinimumDeltaWidth() const;
+        double getMaximumDeltaWidth() const;
         double getMinimumDeltaTheta() const;
         double getMaximumDeltaTheta() const;
     protected:
 
     private:
-        double _MinDeltaX;
-        double _MaxDeltaX;
-        double _MinDeltaY;
-        double _MaxDeltaY;
+        double _MinDeltaLength;
+        double _MaxDeltaLength;
+        double _MinDeltaWidth;
+        double _MaxDeltaWidth;
         double _MinDeltaTheta;
         double _MaxDeltaTheta;
         int _FootIndex;

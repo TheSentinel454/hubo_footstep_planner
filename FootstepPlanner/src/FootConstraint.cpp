@@ -53,19 +53,19 @@ FootConstraint::FootConstraint(int footIndex, int refFootIndex,
 {
     _FootIndex = footIndex;
     _ReferenceFootIndex = refFootIndex;
-    _MinDeltaX = minDeltaX;
-    _MaxDeltaX = maxDeltaX;
-    _MinDeltaY = minDeltaY;
-    _MaxDeltaY = maxDeltaY;
+    _MinDeltaLength = minDeltaX;
+    _MaxDeltaLength = maxDeltaX;
+    _MinDeltaWidth = minDeltaY;
+    _MaxDeltaWidth = maxDeltaY;
     _MinDeltaTheta = minDeltaTheta;
     _MaxDeltaTheta = maxDeltaTheta;
 }
 
 int FootConstraint::getFootIndex() const { return _FootIndex; }
 int FootConstraint::getRefFootIndex() const { return _ReferenceFootIndex; }
-double FootConstraint::getMinimumDeltaX() const { return _MinDeltaX; }
-double FootConstraint::getMaximumDeltaX() const { return _MaxDeltaX; }
-double FootConstraint::getMinimumDeltaY() const { return _MinDeltaY; }
-double FootConstraint::getMaximumDeltaY() const { return _MaxDeltaY; }
+double FootConstraint::getMinimumDeltaLength() const { return _MinDeltaLength; }
+double FootConstraint::getMaximumDeltaLength() const { return _MaxDeltaLength; }
+double FootConstraint::getMinimumDeltaWidth() const { return _MinDeltaWidth; }
+double FootConstraint::getMaximumDeltaWidth() const { return _MaxDeltaWidth; }
 double FootConstraint::getMinimumDeltaTheta() const { return _MinDeltaTheta; }
 double FootConstraint::getMaximumDeltaTheta() const { return _MaxDeltaTheta; }

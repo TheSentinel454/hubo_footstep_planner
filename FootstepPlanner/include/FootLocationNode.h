@@ -63,7 +63,7 @@ class FootLocationNode
     public:
         FootLocationNode();
         FootLocationNode(fsp::FootLocation& location, std::vector<Foot>* feet);
-        FootLocationNode(Eigen::Vector2d location, float theta, int footIndex, std::vector<Foot>* feet);
+        FootLocationNode(Eigen::Vector2d location, float worldTheta, float theta, int footIndex, std::vector<Foot>* feet);
         ~FootLocationNode();
 
         FootLocation getFootLocation() const;

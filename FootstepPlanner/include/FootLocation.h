@@ -65,10 +65,11 @@ class FootLocation
 {
     public:
         FootLocation();
-        FootLocation(Eigen::Vector2d location, float theta, int footIndex, std::vector<fsp::Foot>* feet);
+        FootLocation(Eigen::Vector2d location, float worldTheta, float theta, int footIndex, std::vector<fsp::Foot>* feet);
 
         Eigen::Vector2d getLocation() const;
         float getTheta() const;
+        float getWorldTheta() const;
         int getFootIndex() const;
         std::vector<fsp::Line> getBounds() const;
         bool isCollision(const fsp::FootLocation& location) const;
@@ -77,6 +78,7 @@ class FootLocation
     private:
         Eigen::Vector2d _Location;
         float _Theta;
+        float _WorldTheta;
         int _FootIndex;
         std::vector<Line> _Bounds;
     };

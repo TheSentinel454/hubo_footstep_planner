@@ -85,6 +85,8 @@ class FootstepPlanVisualizer
         osg::PositionAttitudeTransform* _getFootTransform(fsp::FootLocation location, osg::Vec4 color);
         osg::Geode* _getTileFromMap(float mapX, float mapY, float discretizationResolution, Eigen::Vector2d invMinPoint, osg::Vec4 color);
         osg::Geode* _getTileFromWorld(float worldX, float worldY, float discretizationResolution, Eigen::Vector2d invMinPoint, osg::Vec4 color);
+        Eigen::Vector2i _getMapCoord(Eigen::Vector2d worldCoord, Eigen::Vector2d invMinPoint, float discretizationResolution);
+        Eigen::Vector2d _getWorldCoord(Eigen::Vector2i mapCoord, Eigen::Vector2d invMinPoint, float discretizationResolution);
 
         std::vector<Foot> _Feet;
     };

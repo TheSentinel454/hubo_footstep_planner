@@ -52,12 +52,12 @@ FootLocationNode::FootLocationNode(){}
 
 FootLocationNode::FootLocationNode(FootLocation& location, vector<Foot>* feet)
 {
-    _Location = FootLocation(location.getLocation(), location.getTheta(), location.getFootIndex(), feet);
+    _Location = FootLocation(location.getLocation(), location.getWorldTheta(), location.getTheta(), location.getFootIndex(), feet);
 }
 
-FootLocationNode::FootLocationNode(Vector2d location, float theta, int footIndex, vector<Foot>* feet)
+FootLocationNode::FootLocationNode(Vector2d location, float worldTheta, float theta, int footIndex, vector<Foot>* feet)
 {
-    _Location = FootLocation(location, theta, footIndex, feet);
+    _Location = FootLocation(location, worldTheta, theta, footIndex, feet);
 }
 
 FootLocationNode::~FootLocationNode()
@@ -68,7 +68,7 @@ FootLocationNode::~FootLocationNode()
 
 FootLocation FootLocationNode::getFootLocation() const { return _Location; }
 Vector2d FootLocationNode::getLocation() const { return _Location.getLocation(); }
-float FootLocationNode::getTheta() const { return _Location.getTheta(); }
+float FootLocationNode::getTheta() const { return _Location.getWorldTheta(); }
 int FootLocationNode::getFootIndex() const { return _Location.getFootIndex(); }
 vector<Line> FootLocationNode::getBounds() const { return _Location.getBounds(); }
 vector<FootLocationNode*> FootLocationNode::getChildren() const { return _Children; }

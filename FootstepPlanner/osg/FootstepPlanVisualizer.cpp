@@ -147,7 +147,7 @@ PositionAttitudeTransform* FootstepPlanVisualizer::_getFootTransform(FootLocatio
     Vector2d loc = location.getLocation();
     double xOffset = _Feet[location.getFootIndex()].getLength() / 2;
     double yOffset = _Feet[location.getFootIndex()].getWidth() / 2;
-    float theta = location.getTheta();
+    float theta = location.getWorldTheta();
     currentPositionVertices->push_back(Vec3(-xOffset, -yOffset, 0));
     currentPositionVertices->push_back(Vec3(xOffset, -yOffset, 0));
     currentPositionVertices->push_back(Vec3(xOffset, yOffset, 0));
@@ -269,6 +269,7 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
     Vec4 yellow = Vec4(1.0f, 1.0f, 0.0f, 1.0f);
     Vec4 opaque_yellow = Vec4(1.0f, 1.0f, 0.0f, 0.3f);
     Vec4 black = Vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    Vec4 gray = Vec4(0.5f, 0.5f, 0.5f, 1.0f);
     Vec4 white = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     // Add the current position(blue).
@@ -289,7 +290,7 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
     // Add the steps (yellow)
     for(int i = 0; i < plan.size(); i++)
     {
-        root->addChild(_getFootTransform(plan[i], yellow));
+        root->addChild(_getFootTransform(plan[i], (i % 2 ? white : gray)));
     }
 
     // Add the plan outline (black)
@@ -348,7 +349,7 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
     root->addChild(gridGeode);
 
     Vector2d invMinPoint(-minPoint[0], -minPoint[1]);
-
+    /*
     // Add the Start tile
     root->addChild(_getTileFromWorld(currentLocation[0].getLocation()[0],
                                      currentLocation[0].getLocation()[1],
@@ -362,6 +363,7 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
                                      discretizationResolution,
                                      invMinPoint,
                                      opaque_green));
+
     // Go through each of the obstacles
     for(int i = 0; i < obstacles.size(); i++)
     {
@@ -384,6 +386,7 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
                                          obstacles[i].getEnd()[1],
                                          discretizationResolution, invMinPoint, opaque_red));
     }
+    */
 
     // Go through the map Plan
     for(int i = 0; i < mapPlan.size(); i++)
@@ -392,11 +395,344 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
         root->addChild(_getTileFromMap(mapPlan[i][0],
                                        mapPlan[i][1],
                                        discretizationResolution, invMinPoint, opaque_yellow));
+        /*
+        Vec3 drawPos((mapPlan[i][0] * discretizationResolution - invMinPoint[0]),
+                     (mapPlan[i][1] * discretizationResolution - invMinPoint[1]), -0.25f);
+
+        Geode* sphereGeode = new Geode();
+        osg::Cylinder* spherePointer = new osg::Cylinder(drawPos, discretizationResolution / 2.0d, 0.0d);
+        osg::ShapeDrawable* sphereShape = new osg::ShapeDrawable(spherePointer);
+        sphereShape->setColor(gray);
+        sphereGeode->addDrawable(sphereShape);
+
+        root->addChild(sphereGeode);
+        */
     }
+
+    int prevDirection = 0;
+    // 0 = Moving Right
+    // 1 = Moving Left
+    // 2 = Moving Up
+    // 3 = Moving Down
+    vector<int> directions;
+    // 0 = Continue Right
+    // 1 = Continue Left
+    // 2 = Continue Up
+    // 3 = Continue Down
+    // 4 = Turn Left
+    // 5 = Turn Right
+    // Now we need to generate the foot step path
+    for(int i = 0; i < (mapPlan.size() - 1); i++)
+    {
+        // Make sure we have the next location
+        if ((i + 1) < mapPlan.size())
+        {
+            // Check for X increasing (Moving Right)
+            if (mapPlan[i][0] < mapPlan[i+1][0])
+            {
+                switch(prevDirection)
+                {
+                case 0:
+                    directions.push_back(0);
+                    cout << "Continue Right" << endl;
+                    break;
+                case 2:
+                    directions.push_back(5);
+                    cout << "Turning Right" << endl;
+                    break;
+                case 3:
+                    directions.push_back(4);
+                    cout << "Turning Left" << endl;
+                    break;
+                case 1:
+                default:
+                    cout << "WTF?!?!" << endl;
+                    break;
+                }
+                prevDirection = 0;
+            }
+            // Check for X decreasing (Moving Left)
+            if (mapPlan[i][0] > mapPlan[i+1][0])
+            {
+                switch(prevDirection)
+                {
+                case 1:
+                    directions.push_back(1);
+                    cout << "Continue Left" << endl;
+                    break;
+                case 2:
+                    directions.push_back(4);
+                    cout << "Turning Left" << endl;
+                    break;
+                case 3:
+                    directions.push_back(5);
+                    cout << "Turning Right" << endl;
+                    break;
+                case 0:
+                default:
+                    cout << "WTF?!?!" << endl;
+                    break;
+                }
+                prevDirection = 1;
+            }
+            // Check for Y increasing (Moving Up)
+            if (mapPlan[i][1] < mapPlan[i+1][1])
+            {
+                switch(prevDirection)
+                {
+                case 2:
+                    directions.push_back(2);
+                    cout << "Continue Up" << endl;
+                    break;
+                case 0:
+                    directions.push_back(4);
+                    cout << "Turning Left" << endl;
+                    break;
+                case 1:
+                    directions.push_back(5);
+                    cout << "Turning Right" << endl;
+                    break;
+                case 3:
+                default:
+                    cout << "WTF?!?!" << endl;
+                    break;
+                }
+                prevDirection = 2;
+            }
+            // Check for Y decreasing (Moving Down)
+            if (mapPlan[i][1] > mapPlan[i+1][1])
+            {
+                switch(prevDirection)
+                {
+                case 3:
+                    directions.push_back(3);
+                    cout << "Continue Down" << endl;
+                    break;
+                case 1:
+                    directions.push_back(4);
+                    cout << "Turning Left" << endl;
+                    break;
+                case 0:
+                    directions.push_back(5);
+                    cout << "Turning Right" << endl;
+                    break;
+                case 2:
+                default:
+                    cout << "WTF?!?!" << endl;
+                    break;
+                }
+                prevDirection = 3;
+            }
+        }
+    }
+    cout << "MapPlan Size: " << mapPlan.size() << endl;
+    cout << "Directions Size: " << directions.size() << endl;
+
+    /*
+    int previousFootIndex = currentLocation[0].getFootIndex();
+    int nextFootIndex = (previousFootIndex + 1);
+    nextFootIndex = nextFootIndex % _Feet.size();
+    FootLocation flLatestFootLocation[_Feet.size()];
+    Vector2i viLatestFootLocation[_Feet.size()];
+    // Save the latest foot location (Current Location)
+    flLatestFootLocation[previousFootIndex] = currentLocation[0];
+    viLatestFootLocation[previousFootIndex] = _getMapCoord(flLatestFootLocation[nextFootIndex].getLocation());
+    */
+
+    // Add the map lines (black)
+    Geode* mapGeode = new Geode();
+    Geometry* mapGeometry = new Geometry();
+    Vec4Array* mapColors = new Vec4Array;
+    mapColors->push_back(black);
+    Vec3Array* mapVertices = new Vec3Array;
+    float previousDesiredTheta = 0.0f;
+    float desiredTheta;
+    int x, y;
+    for(int a = 0; a < mapPlan.size(); a++)
+    {
+        Vector2d worldCoord = _getWorldCoord(mapPlan[a], invMinPoint, discretizationResolution);
+        if (a < directions.size())
+        {
+            switch(directions[a])
+            {
+            case 1: // Continue Left
+                cout << "Continue Left" << endl;
+                desiredTheta = 180.0f;
+                mapVertices->push_back(Vec3(worldCoord[0], worldCoord[1] + (discretizationResolution/2.0d), 0));
+                mapVertices->push_back(Vec3(worldCoord[0] + discretizationResolution, worldCoord[1] + (discretizationResolution/2.0d), 0));
+                break;
+            case 2: // Continue Up
+                cout << "Continue Up" << endl;
+                desiredTheta = 90.0f;
+                mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1], 0));
+                mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1] + discretizationResolution, 0));
+                break;
+            case 3: // Continue Down
+                cout << "Continue Down" << endl;
+                desiredTheta = 270.0f;
+                mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1], 0));
+                mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1] + discretizationResolution, 0));
+                break;
+            case 4: // Turn Left
+                cout << "Turn Left" << endl;
+                desiredTheta = ((int)previousDesiredTheta + 90) % 360;
+                // First step
+                if (mapPlan[a-1][0] > mapPlan[a][0])
+                    // Decrease X
+                    x = -1;
+                else if (mapPlan[a-1][0] < mapPlan[a][0])
+                    // Increase X
+                    x = 1;
+                else if (mapPlan[a-1][1] < mapPlan[a][1])
+                    // Increase Y
+                    y = 1;
+                else if (mapPlan[a-1][1] > mapPlan[a][1])
+                    // Decrease Y
+                    y = -1;
+                // Second step
+                if (mapPlan[a][0] > mapPlan[a+1][0])
+                    // Decrease X
+                    x = -1;
+                else if (mapPlan[a][0] < mapPlan[a+1][0])
+                    // Increase X
+                    x = 1;
+                else if (mapPlan[a][1] < mapPlan[a+1][1])
+                    // Increase Y
+                    y = 1;
+                else if (mapPlan[a][1] > mapPlan[a+1][1])
+                    // Decrease Y
+                    y = -1;
+                if (x < 0)
+                {
+                    // Decrease X
+                    if (y < 0)
+                    {
+                        // Decrease Y
+                        mapVertices->push_back(Vec3(worldCoord[0] + discretizationResolution, worldCoord[1] + (discretizationResolution/2.0d), 0));
+                        mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1], 0));
+                    }
+                    else if (y > 0)
+                    {
+                        // Increase Y
+                        mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1], 0));
+                        mapVertices->push_back(Vec3(worldCoord[0], worldCoord[1] + (discretizationResolution/2.0d), 0));
+                    }
+                }
+                else if (x > 0)
+                {
+                    // Increase X
+                    if (y < 0)
+                    {
+                        // Decrease Y
+                        mapVertices->push_back(Vec3(worldCoord[0] + discretizationResolution/2.0d, worldCoord[1] + discretizationResolution, 0));
+                        mapVertices->push_back(Vec3(worldCoord[0] + discretizationResolution, worldCoord[1] + discretizationResolution/2.0d, 0));
+                    }
+                    else if (y > 0)
+                    {
+                        // Increase Y
+                        mapVertices->push_back(Vec3(worldCoord[0], worldCoord[1] + (discretizationResolution/2.0d), 0));
+                        mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1] + discretizationResolution, 0));
+                    }
+                }
+                break;
+            case 5: // Turn Right
+                cout << "Turn Right" << endl;
+                desiredTheta = ((int)previousDesiredTheta - 90 + 360) % 360;
+                // First step
+                if (mapPlan[a-1][0] > mapPlan[a][0])
+                    // Decrease X
+                    x = -1;
+                else if (mapPlan[a-1][0] < mapPlan[a][0])
+                    // Increase X
+                    x = 1;
+                else if (mapPlan[a-1][1] < mapPlan[a][1])
+                    // Increase Y
+                    y = 1;
+                else if (mapPlan[a-1][1] > mapPlan[a][1])
+                    // Decrease Y
+                    y = -1;
+                // Second step
+                if (mapPlan[a][0] > mapPlan[a+1][0])
+                    // Decrease X
+                    x = -1;
+                else if (mapPlan[a][0] < mapPlan[a+1][0])
+                    // Increase X
+                    x = 1;
+                else if (mapPlan[a][1] < mapPlan[a+1][1])
+                    // Increase Y
+                    y = 1;
+                else if (mapPlan[a][1] > mapPlan[a+1][1])
+                    // Decrease Y
+                    y = -1;
+                if (x < 0)
+                {
+                    // Decrease X
+                    if (y < 0)
+                    {
+                        // Decrease Y
+                        mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1] + discretizationResolution, 0));
+                        mapVertices->push_back(Vec3(worldCoord[0], worldCoord[1] + (discretizationResolution/2.0d), 0));
+                    }
+                    else if (y > 0)
+                    {
+                        // Increase Y
+                        mapVertices->push_back(Vec3(worldCoord[0] + discretizationResolution, worldCoord[1] + discretizationResolution/2.0d, 0));
+                        mapVertices->push_back(Vec3(worldCoord[0] + discretizationResolution/2.0d, worldCoord[1] + discretizationResolution, 0));
+                    }
+                }
+                else if (x > 0)
+                {
+                    // Increase X
+                    if (y < 0)
+                    {
+                        // Decrease Y
+                        mapVertices->push_back(Vec3(worldCoord[0], worldCoord[1] + (discretizationResolution/2.0d), 0));
+                        mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1], 0));
+                    }
+                    else if (y > 0)
+                    {
+                        // Increase Y
+                        mapVertices->push_back(Vec3(worldCoord[0] + (discretizationResolution/2.0d), worldCoord[1], 0));
+                        mapVertices->push_back(Vec3(worldCoord[0] + discretizationResolution, worldCoord[1] + (discretizationResolution/2.0d), 0));
+                    }
+                }
+                break;
+            case 0: // Continue Right
+            default:
+                cout << "Continue Right" << endl;
+                desiredTheta = 0.0f;
+                mapVertices->push_back(Vec3(worldCoord[0], worldCoord[1] + (discretizationResolution/2.0d), 0));
+                mapVertices->push_back(Vec3(worldCoord[0] + discretizationResolution, worldCoord[1] + (discretizationResolution/2.0d), 0));
+                break;
+            }
+        }
+    }
+    // Set the Vertex array
+    mapGeometry->setVertexArray(mapVertices);
+
+    // Set the color
+    mapGeometry->setColorArray(mapColors);
+    mapGeometry->setColorBinding(Geometry::BIND_OVERALL);
+    // Add the primitive set
+    mapGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,mapVertices->size()));
+    mapGeode->addDrawable(mapGeometry);
+    root->addChild(mapGeode);
 
     osgViewer::Viewer viewer;
     viewer.setSceneData(root);
     viewer.run();
+}
+
+
+Vector2i FootstepPlanVisualizer::_getMapCoord(Vector2d worldCoord, Vector2d invMinPoint, float discretizationResolution)
+{
+    return Vector2i(floor((worldCoord[0] + invMinPoint[0]) / discretizationResolution), floor((worldCoord[1] + invMinPoint[1]) / discretizationResolution));
+}
+
+Vector2d FootstepPlanVisualizer::_getWorldCoord(Vector2i mapCoord, Vector2d invMinPoint, float discretizationResolution)
+{
+    return Vector2d((mapCoord[0] * discretizationResolution) - invMinPoint[0],
+                    (mapCoord[1] * discretizationResolution) - invMinPoint[1]);
 }
 
 ///
@@ -425,7 +761,7 @@ Geode* FootstepPlanVisualizer::_getTileFromWorld(float worldX, float worldY, flo
 Geode* FootstepPlanVisualizer::_getTileFromMap(float mapX, float mapY, float discretizationResolution, Vector2d invMinPoint, Vec4 color)
 {
     Vec3 drawPos((mapX * discretizationResolution - invMinPoint[0]) + discretizationResolution/2.0f,
-                 (mapY * discretizationResolution - invMinPoint[1]) + discretizationResolution/2.0f, 0.0f);
+                 (mapY * discretizationResolution - invMinPoint[1]) + discretizationResolution/2.0f, -0.25f);
 
     Geode* boxGeode = new Geode();
     osg::Box* boxPointer = new osg::Box(drawPos, discretizationResolution, discretizationResolution, 0);
@@ -584,7 +920,7 @@ void FootstepPlanVisualizer::visualizePlan(vector<FootLocation> currentLocation,
         currentFoot->push_back(j + 2);
         currentFoot->push_back(j + 3);
         planPositionGeometry->addPrimitiveSet(currentFoot);
-        planPositionColors->push_back(yellow);
+        planPositionColors->push_back((i % 2 ? white : black));
     }
     planPositionGeometry->setColorArray(planPositionColors);
     planPositionGeometry->setColorBinding(Geometry::BIND_PER_PRIMITIVE_SET);

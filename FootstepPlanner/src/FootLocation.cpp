@@ -54,7 +54,7 @@ using namespace std;
 FootLocation::FootLocation()
 {
     _Location = Vector2d(0.0d, 0.0d);
-    _Theta = 0.0f;
+    _WorldTheta = 0.0f;
     _FootIndex = -1;
 }
 
@@ -65,10 +65,11 @@ FootLocation::FootLocation()
 /// \param footIndex
 /// \param feet
 ///
-FootLocation::FootLocation(Vector2d location, float theta, int footIndex, vector<Foot>* feet)
+FootLocation::FootLocation(Vector2d location, float worldTheta, float theta, int footIndex, vector<Foot>* feet)
 {
     _Location = location;
     _Theta = theta;
+    _WorldTheta = worldTheta;
     _FootIndex = footIndex;
     float yOffset = (*feet)[footIndex].getWidth() / 2;
     float xOffset = (*feet)[footIndex].getLength() / 2;
@@ -80,7 +81,7 @@ FootLocation::FootLocation(Vector2d location, float theta, int footIndex, vector
     Vector2d p4(xOffset, -yOffset);
     // Calculate the Transformation
     Transform<double,2,Affine> t0 = Translation<double,2>(location) *
-                                    Rotation2Dd(theta * (M_PI / 180.0d));
+                                    Rotation2Dd(worldTheta * (M_PI / 180.0d));
     // Calculate the bound points
     p1 = (t0.linear() * p1) + t0.translation();
     p2 = (t0.linear() * p2) + t0.translation();
@@ -121,6 +122,11 @@ bool FootLocation::isCollision(const fsp::FootLocation& location) const
 /// \return
 ///
 Vector2d FootLocation::getLocation() const { return _Location; }
+///
+/// \brief FootLocation::getWorldTheta
+/// \return
+///
+float FootLocation::getWorldTheta() const { return _WorldTheta; }
 ///
 /// \brief FootLocation::getTheta
 /// \return
