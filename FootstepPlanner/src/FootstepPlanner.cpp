@@ -922,7 +922,7 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                             if (currentFootLoc.getLocation()[1] > desiredY)
                             {
                                 // Get the previous Y location with the minimum delta length added
-                                newY = currentFootLoc.getLocation()[1] + fc->getMinimumDeltaLength();
+                                newY = previousFootLoc.getLocation()[1] + fc->getMinimumDeltaLength();
                                 // See if we passed desired
                                 if (newY < desiredY)
                                     // Set back to desired
@@ -931,7 +931,7 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                             else if (currentFootLoc.getLocation()[1] < desiredY)
                             {
                                 // Get the current Y location with the maximum delta length added
-                                newY = previousFootLoc.getLocation()[1] + abs(fc->getMaximumDeltaLength());
+                                newY = currentFootLoc.getLocation()[1] + abs(fc->getMaximumDeltaLength());
                                 // See if we passed desired
                                 if (newY > desiredY)
                                     // Set back to desired
@@ -1046,9 +1046,9 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
             case 4: // Turn Left
                 cout << "Turn Left" << endl;
                 angleChange = 15.0d;
-                desiredTheta = ((int)previousDesiredTheta + 90);
+                desiredTheta = ((int)previousDesiredTheta + 90) % 360;
                 iterations = 90 / angleChange;
-                previousDesiredTheta = ((int)desiredTheta % 360);
+                previousDesiredTheta = desiredTheta;
                 deltaChange = (DISCRETIZATION_RES/2.0d) / iterations;
 
                 // First step
@@ -1153,7 +1153,7 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                             break;
                         }
                         // Current is fine, let's move on to the next foot
-                        plan.push_back(currentFootLoc);
+                        plan.push_back(FootLocation(currentFootLoc.getLocation(), currentFootLoc.getWorldTheta(), 0.0d, nextFootIndex, &_Feet));
                     }
                     // Not at the desired foot alignment for this foot yet
                     else
@@ -1194,11 +1194,26 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                             if (newY > desiredY)
                                 newY = desiredY;
                         }
-                        double newTheta = currentFootLoc.getWorldTheta() + angleChange;
-                        if (newTheta > desiredTheta)
-                            newTheta = desiredTheta;
+                        double newTheta = currentFootLoc.getWorldTheta();// = currentFootLoc.getWorldTheta() + angleChange;
+                        double thetaChange = 0.0d;// = newTheta - currentFootLoc.getWorldTheta();
+                        if (currentFootLoc.getWorldTheta() != desiredTheta)
+                        {
+                            newTheta = currentFootLoc.getWorldTheta() + angleChange;
+                            thetaChange = newTheta - currentFootLoc.getWorldTheta();
+                            if (xChange > 0 && yChange < 0)
+                            {
+                                newTheta = (int)newTheta % 360;
+                                if (newTheta < desiredTheta)
+                                    newTheta = desiredTheta;
+                            }
+                            else
+                            {
+                                if (newTheta > desiredTheta)
+                                    newTheta = desiredTheta;
+                            }
+                        }
 
-                        plan.push_back(FootLocation(Vector2d(newX, newY), newTheta, newTheta - currentFootLoc.getWorldTheta(), nextFootIndex, &_Feet));
+                        plan.push_back(FootLocation(Vector2d(newX, newY), newTheta, thetaChange, nextFootIndex, &_Feet));
                     }
 
                     // Save the latest foot location
