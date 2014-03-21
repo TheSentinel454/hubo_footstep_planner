@@ -365,15 +365,12 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
     cout << "SearchSteps : " << SearchSteps << "\n";
     astarsearch.EnsureMemoryFreed();
 
-
+    /** Left Turn Test **/
+    /*
     mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]+1));
     mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]+1));
-    //mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]-1));
-    //mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]-1));
     mapPlan.push_back(Vector2i(mapPlan.back()[0]-1, mapPlan.back()[1]));
     mapPlan.push_back(Vector2i(mapPlan.back()[0]-1, mapPlan.back()[1]));
-    //mapPlan.push_back(Vector2i(mapPlan.back()[0]-1, mapPlan.back()[1]));
-    //mapPlan.push_back(Vector2i(mapPlan.back()[0]-1, mapPlan.back()[1]));
     mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]-1));
     mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]-1));
     mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]-1));
@@ -381,7 +378,21 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
     mapPlan.push_back(Vector2i(mapPlan.back()[0]+1, mapPlan.back()[1]));
     mapPlan.push_back(Vector2i(mapPlan.back()[0]+1, mapPlan.back()[1]));
     mapPlan.push_back(Vector2i(mapPlan.back()[0]+1, mapPlan.back()[1]));
+    */
 
+    /** Right Turn Test **/
+    /*
+    mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]-1));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]-1));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0]-1, mapPlan.back()[1]));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0]-1, mapPlan.back()[1]));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]+1));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]+1));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]+1));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0], mapPlan.back()[1]+1));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0]+1, mapPlan.back()[1]));
+    mapPlan.push_back(Vector2i(mapPlan.back()[0]+1, mapPlan.back()[1]));
+    */
 
     int prevDirection = 0;
     // 0 = Moving Right
@@ -1232,8 +1243,183 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                 break;
             case 5: // Turn Right
                 cout << "Turn Right" << endl;
-                desiredTheta = ((int)previousDesiredTheta - 90 + 360) % 360;
+                angleChange = 15.0d;
+                desiredTheta = ((int)previousDesiredTheta + 270) % 360;
+                iterations = 90 / angleChange;
                 previousDesiredTheta = desiredTheta;
+                deltaChange = (DISCRETIZATION_RES/2.0d) / iterations;
+
+                // First step
+                if (mapPlan[i-1][0] > mapPlan[i][0])
+                    // Decrease X
+                    xChange = -1;
+                else if (mapPlan[i-1][0] < mapPlan[i][0])
+                    // Increase X
+                    xChange = 1;
+                else if (mapPlan[i-1][1] < mapPlan[i][1])
+                    // Increase Y
+                    yChange = 1;
+                else if (mapPlan[i-1][1] > mapPlan[i][1])
+                    // Decrease Y
+                    yChange = -1;
+                // Second step
+                if (mapPlan[i][0] > mapPlan[i+1][0])
+                    // Decrease X
+                    xChange = -1;
+                else if (mapPlan[i][0] < mapPlan[i+1][0])
+                    // Increase X
+                    xChange = 1;
+                else if (mapPlan[i][1] < mapPlan[i+1][1])
+                    // Increase Y
+                    yChange = 1;
+                else if (mapPlan[i][1] > mapPlan[i+1][1])
+                    // Decrease Y
+                    yChange = -1;
+                cout << "Setup: " << xChange << "," << yChange << endl;
+                do
+                {
+                    // Get the locations
+                    FootLocation previousFootLoc = flLatestFootLocation[previousFootIndex];
+                    FootLocation currentFootLoc = flLatestFootLocation[nextFootIndex];
+
+                    // Find the corresponding constraint
+                    const FootConstraint* fc;
+                    for(int j = 0; j < constraints.size(); j++)
+                    {
+                        // Look for the constraint that corresponds to the next foot
+                        // and that references the previous foot
+                        if (constraints[j].getFootIndex() == nextFootIndex &&
+                            constraints[j].getRefFootIndex() == previousFootIndex)
+                            // Save the pointer to that constraint
+                            fc = &constraints[j];
+                    }
+
+                    // Desired values
+                    double lineDiff = fc->getMinimumDeltaWidth() / 2.0d;
+                    double prevLineDiff = previousFC->getMinimumDeltaWidth() / 2.0d;
+                    if (xChange > 0 && yChange > 0)
+                    {
+                        desiredX = worldCoord[0] + DISCRETIZATION_RES;
+                        prevDesiredX = worldCoord[0] + DISCRETIZATION_RES;
+
+                        desiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) + lineDiff;
+                        prevDesiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) + prevLineDiff;
+
+                        dr = (desiredY > prevDesiredY ? 1.75d : 1.0d);
+                    }
+                    else if (xChange > 0 && yChange < 0)
+                    {
+                        desiredX = worldCoord[0] + (DISCRETIZATION_RES/2.0d) + lineDiff;
+                        prevDesiredX = worldCoord[0] + (DISCRETIZATION_RES/2.0d) + prevLineDiff;
+
+                        desiredY = worldCoord[1];
+                        prevDesiredY = worldCoord[1];
+
+                        dr = (desiredX > prevDesiredX ? 1.75d : 1.0d);
+                    }
+                    else if (xChange < 0 && yChange < 0)
+                    {
+                        desiredX = worldCoord[0];
+                        prevDesiredX = worldCoord[0];
+
+                        desiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) - lineDiff;
+                        prevDesiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) - prevLineDiff;
+
+                        dr = (desiredY < prevDesiredY ? 1.75d : 1.0d);
+                    }
+                    else // xChange < 0 && yChange > 0
+                    {
+                        desiredX = worldCoord[0] + (DISCRETIZATION_RES/2.0d) - lineDiff;
+                        prevDesiredX = worldCoord[0] + (DISCRETIZATION_RES/2.0d) - prevLineDiff;
+
+                        desiredY = worldCoord[1] + DISCRETIZATION_RES;
+                        prevDesiredY = worldCoord[1] + DISCRETIZATION_RES;
+
+                        dr = (desiredX < prevDesiredX ? 1.75d : 1.0d);
+                    }
+
+                    // Check to see if we are at desired foot alignment yet
+                    if (currentFootLoc.getLocation()[0] == desiredX &&
+                        currentFootLoc.getLocation()[1] == desiredY &&
+                        currentFootLoc.getWorldTheta() == desiredTheta)
+                    {
+                        // See if the last foot location was good to go
+                        if (previousFootLoc.getLocation()[0] == prevDesiredX &&
+                            previousFootLoc.getLocation()[1] == prevDesiredY &&
+                            previousFootLoc.getWorldTheta() == desiredTheta)
+                        {
+                            break;
+                        }
+                        // Current is fine, let's move on to the next foot
+                        plan.push_back(FootLocation(currentFootLoc.getLocation(), currentFootLoc.getWorldTheta(), 0.0d, nextFootIndex, &_Feet));
+                    }
+                    // Not at the desired foot alignment for this foot yet
+                    else
+                    {
+                        if (xChange > 0 && yChange > 0)
+                        {
+                            newX = currentFootLoc.getLocation()[0] + deltaChange;
+                            if (newX > desiredX)
+                                newX = desiredX;
+                            newY = currentFootLoc.getLocation()[1] + deltaChange*dr;
+                            if (newY > desiredY)
+                                newY = desiredY;
+                        }
+                        else if (xChange > 0 && yChange < 0)
+                        {
+                            newX = currentFootLoc.getLocation()[0] + deltaChange*dr;
+                            if (newX > desiredX)
+                                newX = desiredX;
+                            newY = currentFootLoc.getLocation()[1] - deltaChange;
+                            if (newY < desiredY)
+                                newY = desiredY;
+                        }
+                        else if (xChange < 0 && yChange < 0)
+                        {
+                            newX = currentFootLoc.getLocation()[0] - deltaChange;
+                            if (newX < desiredX)
+                                newX = desiredX;
+                            newY = currentFootLoc.getLocation()[1] - deltaChange*dr;
+                            if (newY < desiredY)
+                                newY = desiredY;
+                        }
+                        else // xChange < 0 && yChange > 0
+                        {
+                            newX = currentFootLoc.getLocation()[0] - deltaChange*dr;
+                            if (newX < desiredX)
+                                newX = desiredX;
+                            newY = currentFootLoc.getLocation()[1] + deltaChange;
+                            if (newY > desiredY)
+                                newY = desiredY;
+                        }
+                        double newTheta = currentFootLoc.getWorldTheta();
+                        double thetaChange = 0.0d;
+                        if (currentFootLoc.getWorldTheta() != desiredTheta)
+                        {
+                            newTheta = (currentFootLoc.getWorldTheta() - angleChange);
+                            thetaChange = newTheta - currentFootLoc.getWorldTheta();
+                            if (xChange > 0 && yChange < 0)
+                                newTheta = ((int)newTheta + 360) % 360;
+                            if (newTheta < desiredTheta)
+                                newTheta = desiredTheta;
+                        }
+
+                        plan.push_back(FootLocation(Vector2d(newX, newY), newTheta, thetaChange, nextFootIndex, &_Feet));
+                    }
+
+                    // Save the latest foot location
+                    flLatestFootLocation[nextFootIndex] = plan.back();
+                    viLatestFootLocation[nextFootIndex] = _getMapCoord(flLatestFootLocation[nextFootIndex].getLocation());
+                    cout << "Latest Foot Location: " << endl << flLatestFootLocation[nextFootIndex].getLocation() << endl;
+                    cout << "Latest Foot Map Location: " << endl << viLatestFootLocation[nextFootIndex] << endl;
+                    cout << "Next Map Plan Coord: " << endl << mapPlan[i+1] << endl;
+
+                    // Move to the next foot
+                    previousFC = fc;
+                    previousFootIndex = nextFootIndex;
+                    nextFootIndex = (nextFootIndex + 1) % _Feet.size();
+                }
+                while(true);
                 break;
             case 0: // Continue Right
             default:

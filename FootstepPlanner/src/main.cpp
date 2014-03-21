@@ -89,7 +89,7 @@ int main()
     obs.push_back(Line(Vector2d(25.0d, -38.0d), Vector2d(25.0d, -50.0d)));
     obs.push_back(Line(Vector2d(25.0d, -50.0d), Vector2d(10.0d, -17.0d)));
     obs.push_back(Line(Vector2d(10.0d, -17.0d), Vector2d(20.0d, -7.0d)));
-    /*
+    */
     // Blocking obstacles
     obs.push_back(Line(Vector2d(30.0d, 15.0d), Vector2d(35.0d, 15.0d)));
     obs.push_back(Line(Vector2d(35.0d, 15.0d), Vector2d(35.0d, -15.0d)));
@@ -99,7 +99,7 @@ int main()
     obs.push_back(Line(Vector2d(65.0d, 0.0d), Vector2d(65.0d, -35.0d)));
     obs.push_back(Line(Vector2d(65.0d, -35.0d), Vector2d(60.0d, -35.0d)));
     obs.push_back(Line(Vector2d(60.0d, -35.0d), Vector2d(60.0d, 0.0d)));
-    */
+
 
     // Initialize the planner
     FootstepPlanner planner(FEET);

@@ -44,6 +44,18 @@
 
 #include "FootstepPlanVisualizer.h"
 
+//#define START_TILE
+//#define GOAL_TILE
+//#define MAP_TILES
+//#define OBSTACLE_TILES
+#define MAP_GRID
+//#define MAP_LINES
+#define OBSTACLES
+#define FOOTSTEPS
+#define GOAL_LOCATION
+#define START_LOCATION
+
+
 using namespace osg;
 using namespace fsp;
 using namespace std;
@@ -272,21 +284,28 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
     Vec4 gray = Vec4(0.5f, 0.5f, 0.5f, 1.0f);
     Vec4 white = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
+#ifdef START_LOCATION
     // Add the current position(blue).
     for(int i = 0; i < currentLocation.size();i++)
     {
         root->addChild(_getFootTransform(currentLocation[i], blue));
     }
+#endif
 
+#ifdef GOAL_LOCATION
     // Add the goal position (green)
     for(int i = 0; i < goalLocation.size();i++)
     {
         root->addChild(_getFootTransform(goalLocation[i], green));
     }
+#endif
 
+#ifdef OBSTACLES
     // Add the obstacles (red)
     root->addChild(_getObstacle(obstacles));
+#endif
 
+#ifdef FOOTSTEPS
     // Add the steps (yellow)
     for(int i = 0; i < plan.size(); i++)
     {
@@ -318,7 +337,9 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
     planOutlineGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,planOutlineVertices->size()));
     planOutlineGeode->addDrawable(planOutlineGeometry);
     root->addChild(planOutlineGeode);
+#endif
 
+#ifdef MAP_GRID
     // Add the grid (black)
     Geode* gridGeode = new Geode();
     Geometry* gridGeometry = new Geometry();
@@ -347,23 +368,28 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
     gridGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,gridVertices->size()));
     gridGeode->addDrawable(gridGeometry);
     root->addChild(gridGeode);
+#endif
 
     Vector2d invMinPoint(-minPoint[0], -minPoint[1]);
-    /*
+
+#ifdef START_TILE
     // Add the Start tile
     root->addChild(_getTileFromWorld(currentLocation[0].getLocation()[0],
                                      currentLocation[0].getLocation()[1],
                                      discretizationResolution,
                                      invMinPoint,
                                      opaque_blue));
-
+#endif
+#ifdef GOAL_TILE
     // Add the Goal tile
     root->addChild(_getTileFromWorld(goalLocation[0].getLocation()[0],
                                      goalLocation[0].getLocation()[1],
                                      discretizationResolution,
                                      invMinPoint,
                                      opaque_green));
+#endif
 
+#ifdef OBSTACLE_TILES
     // Go through each of the obstacles
     for(int i = 0; i < obstacles.size(); i++)
     {
@@ -386,8 +412,9 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
                                          obstacles[i].getEnd()[1],
                                          discretizationResolution, invMinPoint, opaque_red));
     }
-    */
+#endif
 
+#ifdef MAP_TILES
     // Go through the map Plan
     for(int i = 0; i < mapPlan.size(); i++)
     {
@@ -395,20 +422,10 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
         root->addChild(_getTileFromMap(mapPlan[i][0],
                                        mapPlan[i][1],
                                        discretizationResolution, invMinPoint, opaque_yellow));
-        /*
-        Vec3 drawPos((mapPlan[i][0] * discretizationResolution - invMinPoint[0]),
-                     (mapPlan[i][1] * discretizationResolution - invMinPoint[1]), -0.25f);
-
-        Geode* sphereGeode = new Geode();
-        osg::Cylinder* spherePointer = new osg::Cylinder(drawPos, discretizationResolution / 2.0d, 0.0d);
-        osg::ShapeDrawable* sphereShape = new osg::ShapeDrawable(spherePointer);
-        sphereShape->setColor(gray);
-        sphereGeode->addDrawable(sphereShape);
-
-        root->addChild(sphereGeode);
-        */
     }
+#endif
 
+#ifdef MAP_LINES
     int prevDirection = 0;
     // 0 = Moving Right
     // 1 = Moving Left
@@ -527,17 +544,6 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
     }
     cout << "MapPlan Size: " << mapPlan.size() << endl;
     cout << "Directions Size: " << directions.size() << endl;
-
-    /*
-    int previousFootIndex = currentLocation[0].getFootIndex();
-    int nextFootIndex = (previousFootIndex + 1);
-    nextFootIndex = nextFootIndex % _Feet.size();
-    FootLocation flLatestFootLocation[_Feet.size()];
-    Vector2i viLatestFootLocation[_Feet.size()];
-    // Save the latest foot location (Current Location)
-    flLatestFootLocation[previousFootIndex] = currentLocation[0];
-    viLatestFootLocation[previousFootIndex] = _getMapCoord(flLatestFootLocation[nextFootIndex].getLocation());
-    */
 
     // Add the map lines (black)
     Geode* mapGeode = new Geode();
@@ -717,6 +723,7 @@ void FootstepPlanVisualizer::visualizePlan2(Vector2d minPoint, Vector2d maxPoint
     mapGeometry->addPrimitiveSet(new DrawArrays(GL_LINES,0,mapVertices->size()));
     mapGeode->addDrawable(mapGeometry);
     root->addChild(mapGeode);
+#endif
 
     osgViewer::Viewer viewer;
     viewer.setSceneData(root);
