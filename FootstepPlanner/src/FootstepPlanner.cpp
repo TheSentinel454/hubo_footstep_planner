@@ -47,6 +47,7 @@
 #include <queue>
 #include <cstdlib>
 #define DISPLAY_SOLUTION
+#define GO_TO_GOAL
 
 using namespace fsp;
 using namespace std;
@@ -272,6 +273,8 @@ vector<FootLocation> FootstepPlanner::runRRTPlanner(vector<FootConstraint> const
 
 vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> constraints, vector<FootLocation> currentLocation, vector<FootLocation> goalLocation, vector<Line> obstacles, vector<Vector2i>& mapPlan)
 {
+    // Take a starting time stamp
+    clock_t tStart = clock();
     AStarSearch<MapSearchNode> astarsearch;
 
     // Get the environment map based on the start/goal location and obstacles
@@ -532,7 +535,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
     float worldTheta = 0.0f;
     double newY = 0.0d;
     double newX = 0.0d;
-    double dr;
+    double deltaRatio;
+    double altDeltaRatio;
     const FootConstraint* previousFC;
 
 
@@ -573,6 +577,9 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                     const FootConstraint* fc;
                     for(int j = 0; j < constraints.size(); j++)
                     {
+                        if (constraints[j].getFootIndex() == previousFootIndex &&
+                            constraints[j].getRefFootIndex() == nextFootIndex)
+                            previousFC = &constraints[j];
                         // Look for the constraint that corresponds to the next foot
                         // and that references the previous foot
                         if (constraints[j].getFootIndex() == nextFootIndex &&
@@ -738,6 +745,9 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                     const FootConstraint* fc;
                     for(int j = 0; j < constraints.size(); j++)
                     {
+                        if (constraints[j].getFootIndex() == previousFootIndex &&
+                            constraints[j].getRefFootIndex() == nextFootIndex)
+                            previousFC = &constraints[j];
                         // Look for the constraint that corresponds to the next foot
                         // and that references the previous foot
                         if (constraints[j].getFootIndex() == nextFootIndex &&
@@ -903,6 +913,9 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                     const FootConstraint* fc;
                     for(int j = 0; j < constraints.size(); j++)
                     {
+                        if (constraints[j].getFootIndex() == previousFootIndex &&
+                            constraints[j].getRefFootIndex() == nextFootIndex)
+                            previousFC = &constraints[j];
                         // Look for the constraint that corresponds to the next foot
                         // and that references the previous foot
                         if (constraints[j].getFootIndex() == nextFootIndex &&
@@ -1099,6 +1112,9 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                     const FootConstraint* fc;
                     for(int j = 0; j < constraints.size(); j++)
                     {
+                        if (constraints[j].getFootIndex() == previousFootIndex &&
+                            constraints[j].getRefFootIndex() == nextFootIndex)
+                            previousFC = &constraints[j];
                         // Look for the constraint that corresponds to the next foot
                         // and that references the previous foot
                         if (constraints[j].getFootIndex() == nextFootIndex &&
@@ -1118,7 +1134,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                         desiredY = worldCoord[1] + DISCRETIZATION_RES;
                         prevDesiredY = worldCoord[1] + DISCRETIZATION_RES;
 
-                        dr = (desiredX > prevDesiredX ? 1.75d : 1.0d);
+                        deltaRatio = (desiredX > prevDesiredX ? 1.75d : 1.0d);
+                        altDeltaRatio = (desiredX > prevDesiredX ? 0.75d : 1.0d);
                     }
                     else if (xChange > 0 && yChange < 0)
                     {
@@ -1128,7 +1145,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                         desiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) + lineDiff;
                         prevDesiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) + prevLineDiff;
 
-                        dr = (desiredY < prevDesiredY ? 1.75d : 1.0d);
+                        deltaRatio = (desiredY < prevDesiredY ? 1.75d : 1.0d);
+                        altDeltaRatio = (desiredY < prevDesiredY ? 0.75d : 1.0d);
                     }
                     else if (xChange < 0 && yChange < 0)
                     {
@@ -1138,7 +1156,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                         desiredY = worldCoord[1];
                         prevDesiredY = worldCoord[1];
 
-                        dr = (desiredX < prevDesiredX ? 1.75d : 1.0d);
+                        deltaRatio = (desiredX < prevDesiredX ? 1.75d : 1.0d);
+                        altDeltaRatio = (desiredX < prevDesiredX ? 0.75d : 1.0d);
                     }
                     else // xChange < 0 && yChange > 0
                     {
@@ -1148,7 +1167,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                         desiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) - lineDiff;
                         prevDesiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) - prevLineDiff;
 
-                        dr = (desiredY > prevDesiredY ? 1.75d : 1.0d);
+                        deltaRatio = (desiredY > prevDesiredY ? 1.75d : 1.0d);
+                        altDeltaRatio = (desiredY > prevDesiredY ? 0.75d : 1.0d);
                     }
 
                     // Check to see if we are at desired foot alignment yet
@@ -1171,42 +1191,42 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                     {
                         if (xChange > 0 && yChange > 0)
                         {
-                            newX = currentFootLoc.getLocation()[0] + deltaChange*dr;
+                            newX = currentFootLoc.getLocation()[0] + deltaChange*deltaRatio;
                             if (newX > desiredX)
                                 newX = desiredX;
-                            newY = currentFootLoc.getLocation()[1] + deltaChange;
+                            newY = currentFootLoc.getLocation()[1] + deltaChange*altDeltaRatio;
                             if (newY > desiredY)
                                 newY = desiredY;
                         }
                         else if (xChange > 0 && yChange < 0)
                         {
-                            newX = currentFootLoc.getLocation()[0] + deltaChange;
+                            newX = currentFootLoc.getLocation()[0] + deltaChange*altDeltaRatio;
                             if (newX > desiredX)
                                 newX = desiredX;
-                            newY = currentFootLoc.getLocation()[1] - deltaChange*dr;
+                            newY = currentFootLoc.getLocation()[1] - deltaChange*deltaRatio;
                             if (newY < desiredY)
                                 newY = desiredY;
                         }
                         else if (xChange < 0 && yChange < 0)
                         {
-                            newX = currentFootLoc.getLocation()[0] - deltaChange*dr;
+                            newX = currentFootLoc.getLocation()[0] - deltaChange*deltaRatio;
                             if (newX < desiredX)
                                 newX = desiredX;
-                            newY = currentFootLoc.getLocation()[1] - deltaChange;
+                            newY = currentFootLoc.getLocation()[1] - deltaChange*altDeltaRatio;
                             if (newY < desiredY)
                                 newY = desiredY;
                         }
                         else // xChange < 0 && yChange > 0
                         {
-                            newX = currentFootLoc.getLocation()[0] - deltaChange;
+                            newX = currentFootLoc.getLocation()[0] - deltaChange*altDeltaRatio;
                             if (newX < desiredX)
                                 newX = desiredX;
-                            newY = currentFootLoc.getLocation()[1] + deltaChange*dr;
+                            newY = currentFootLoc.getLocation()[1] + deltaChange*deltaRatio;
                             if (newY > desiredY)
                                 newY = desiredY;
                         }
-                        double newTheta = currentFootLoc.getWorldTheta();// = currentFootLoc.getWorldTheta() + angleChange;
-                        double thetaChange = 0.0d;// = newTheta - currentFootLoc.getWorldTheta();
+                        double newTheta = currentFootLoc.getWorldTheta();
+                        double thetaChange = 0.0d;
                         if (currentFootLoc.getWorldTheta() != desiredTheta)
                         {
                             newTheta = currentFootLoc.getWorldTheta() + angleChange;
@@ -1286,6 +1306,9 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                     const FootConstraint* fc;
                     for(int j = 0; j < constraints.size(); j++)
                     {
+                        if (constraints[j].getFootIndex() == previousFootIndex &&
+                            constraints[j].getRefFootIndex() == nextFootIndex)
+                            previousFC = &constraints[j];
                         // Look for the constraint that corresponds to the next foot
                         // and that references the previous foot
                         if (constraints[j].getFootIndex() == nextFootIndex &&
@@ -1305,7 +1328,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                         desiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) + lineDiff;
                         prevDesiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) + prevLineDiff;
 
-                        dr = (desiredY > prevDesiredY ? 1.75d : 1.0d);
+                        deltaRatio = (desiredY > prevDesiredY ? 1.75d : 1.0d);
+                        altDeltaRatio = (desiredY > prevDesiredY ? 0.75d : 1.0d);
                     }
                     else if (xChange > 0 && yChange < 0)
                     {
@@ -1315,7 +1339,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                         desiredY = worldCoord[1];
                         prevDesiredY = worldCoord[1];
 
-                        dr = (desiredX > prevDesiredX ? 1.75d : 1.0d);
+                        deltaRatio = (desiredX > prevDesiredX ? 1.75d : 1.0d);
+                        altDeltaRatio = (desiredX > prevDesiredX ? 0.75d : 1.0d);
                     }
                     else if (xChange < 0 && yChange < 0)
                     {
@@ -1325,7 +1350,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                         desiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) - lineDiff;
                         prevDesiredY = worldCoord[1] + (DISCRETIZATION_RES/2.0d) - prevLineDiff;
 
-                        dr = (desiredY < prevDesiredY ? 1.75d : 1.0d);
+                        deltaRatio = (desiredY < prevDesiredY ? 1.75d : 1.0d);
+                        altDeltaRatio = (desiredY < prevDesiredY ? 0.75d : 1.0d);
                     }
                     else // xChange < 0 && yChange > 0
                     {
@@ -1335,7 +1361,8 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                         desiredY = worldCoord[1] + DISCRETIZATION_RES;
                         prevDesiredY = worldCoord[1] + DISCRETIZATION_RES;
 
-                        dr = (desiredX < prevDesiredX ? 1.75d : 1.0d);
+                        deltaRatio = (desiredX < prevDesiredX ? 1.75d : 1.0d);
+                        altDeltaRatio = (desiredX < prevDesiredX ? 0.75d : 1.0d);
                     }
 
                     // Check to see if we are at desired foot alignment yet
@@ -1358,37 +1385,37 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                     {
                         if (xChange > 0 && yChange > 0)
                         {
-                            newX = currentFootLoc.getLocation()[0] + deltaChange;
+                            newX = currentFootLoc.getLocation()[0] + deltaChange*altDeltaRatio;
                             if (newX > desiredX)
                                 newX = desiredX;
-                            newY = currentFootLoc.getLocation()[1] + deltaChange*dr;
+                            newY = currentFootLoc.getLocation()[1] + deltaChange*deltaRatio;
                             if (newY > desiredY)
                                 newY = desiredY;
                         }
                         else if (xChange > 0 && yChange < 0)
                         {
-                            newX = currentFootLoc.getLocation()[0] + deltaChange*dr;
+                            newX = currentFootLoc.getLocation()[0] + deltaChange*deltaRatio;
                             if (newX > desiredX)
                                 newX = desiredX;
-                            newY = currentFootLoc.getLocation()[1] - deltaChange;
+                            newY = currentFootLoc.getLocation()[1] - deltaChange*altDeltaRatio;
                             if (newY < desiredY)
                                 newY = desiredY;
                         }
                         else if (xChange < 0 && yChange < 0)
                         {
-                            newX = currentFootLoc.getLocation()[0] - deltaChange;
+                            newX = currentFootLoc.getLocation()[0] - deltaChange*altDeltaRatio;
                             if (newX < desiredX)
                                 newX = desiredX;
-                            newY = currentFootLoc.getLocation()[1] - deltaChange*dr;
+                            newY = currentFootLoc.getLocation()[1] - deltaChange*deltaRatio;
                             if (newY < desiredY)
                                 newY = desiredY;
                         }
                         else // xChange < 0 && yChange > 0
                         {
-                            newX = currentFootLoc.getLocation()[0] - deltaChange*dr;
+                            newX = currentFootLoc.getLocation()[0] - deltaChange*deltaRatio;
                             if (newX < desiredX)
                                 newX = desiredX;
-                            newY = currentFootLoc.getLocation()[1] + deltaChange;
+                            newY = currentFootLoc.getLocation()[1] + deltaChange*altDeltaRatio;
                             if (newY > desiredY)
                                 newY = desiredY;
                         }
@@ -1592,323 +1619,52 @@ vector<FootLocation> FootstepPlanner::runAStarPlanner(vector<FootConstraint> con
                 break;
             }
         }
-
-        /*
-        do
-        {
-            cout << "Map Plan: " << i << endl;
-            // Get the locations
-            FootLocation previousFootLoc = flLatestFootLocation[previousFootIndex];
-            FootLocation currentFootLoc = flLatestFootLocation[nextFootIndex];
-
-            // Find the corresponding constraint
-            const FootConstraint* fc;
-            for(int j = 0; j < constraints.size(); j++)
-            {
-                // Look for the constraint that corresponds to the next foot
-                // and that references the previous foot
-                if (constraints[j].getFootIndex() == nextFootIndex &&
-                    constraints[j].getRefFootIndex() == previousFootIndex)
-                    // Save the pointer to that constraint
-                    fc = &constraints[j];
-            }
-
-            // See if the next foot is already in the next map tile
-            if (viLatestFootLocation[nextFootIndex][0] == mapPlan[i+1][0] &&
-                viLatestFootLocation[nextFootIndex][1] == mapPlan[i+1][1])
-            {
-                // If so, let's just stay
-                plan.push_back(currentFootLoc);
-                continue;
-            }
-
-            float localTheta = 0.0f;
-            float worldTheta = 0.0f;
-            Vector2d worldCoord = _getWorldCoord(mapPlan[i+1]);
-            Vector2d newLoc;
-            Vector2i currentMapLoc;
-            Vector2i desiredMapLoc;
-            Vector2d delta;
-            switch(directions[i])
-            {
-            case 1: // Continue Left
-                cout << "Continue Left" << endl;
-                desiredTheta = 180.0f;
-                worldTheta = 180.0f;
-                // See if the current world theta is greater than the desired
-                if (currentFootLoc.getWorldTheta() > desiredTheta)
-                {
-                    // Get the current world theta with the minimum delta theta removed
-                    worldTheta = currentFootLoc.getWorldTheta() - fc->getMinimumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta < desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                else if (currentFootLoc.getWorldTheta() < desiredTheta)
-                {
-                    // Get the current world theta with the maximum delta theta added
-                    worldTheta = currentFootLoc.getWorldTheta() + fc->getMaximumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta > desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                // Now let's calculate the local change
-                localTheta = worldTheta - currentFootLoc.getWorldTheta();
-                // Now lets figure out how far we can go
-                newLoc = currentFootLoc.getLocation();
-                // We need to move min delta x
-                newLoc += Vector2d(fc->getMinimumDeltaX(), 0.0d);
-
-                plan.push_back(FootLocation(newLoc, worldTheta, localTheta, nextFootIndex, &_Feet));
-                break;
-            case 2: // Continue Up
-                cout << "Continue Up" << endl;
-                desiredTheta = 90.0f;
-                worldTheta = 90.0f;
-                // See if the current world theta is greater than the desired
-                if (currentFootLoc.getWorldTheta() > desiredTheta)
-                {
-                    // Get the current world theta with the minimum delta theta removed
-                    worldTheta = currentFootLoc.getWorldTheta() - fc->getMinimumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta < desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                else if (currentFootLoc.getWorldTheta() < desiredTheta)
-                {
-                    // Get the current world theta with the maximum delta theta added
-                    worldTheta = currentFootLoc.getWorldTheta() + fc->getMaximumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta > desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                // Now let's calculate the local change
-                localTheta = worldTheta - currentFootLoc.getWorldTheta();
-                // Now lets figure out how far we can go
-                newLoc = currentFootLoc.getLocation();
-                // We need to move max delta y
-                newLoc += Vector2d(0.0d, fc->getMaximumDeltaY());
-
-                plan.push_back(FootLocation(newLoc, worldTheta, localTheta, nextFootIndex, &_Feet));
-                break;
-            case 3: // Continue Down
-                cout << "Continue Down" << endl;
-                desiredTheta = 270.0f;
-                worldTheta = 270.0f;
-                // See if the current world theta is greater than the desired
-                if (currentFootLoc.getWorldTheta() > desiredTheta)
-                {
-                    // Get the current world theta with the minimum delta theta removed
-                    worldTheta = currentFootLoc.getWorldTheta() - fc->getMinimumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta < desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                else if (currentFootLoc.getWorldTheta() < desiredTheta)
-                {
-                    // Get the current world theta with the maximum delta theta added
-                    worldTheta = currentFootLoc.getWorldTheta() + fc->getMaximumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta > desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                // Now let's calculate the local change
-                localTheta = worldTheta - currentFootLoc.getWorldTheta();
-                // Now lets figure out how far we can go
-                newLoc = currentFootLoc.getLocation();
-                // We need to move min delta y
-                newLoc += Vector2d(0.0d, fc->getMinimumDeltaY());
-
-                plan.push_back(FootLocation(newLoc, worldTheta, localTheta, nextFootIndex, &_Feet));
-                break;
-            case 4: // Turn Left
-                cout << "Turn Left" << endl;
-                desiredTheta = ((int)previousDesiredTheta + 90) % 360;
-                //worldCoord += Vector2d((DISCRETIZATION_RES / 2.0d), (DISCRETIZATION_RES / 2.0d));
-
-                plan.push_back(FootLocation(worldCoord, desiredTheta, desiredTheta, nextFootIndex, &_Feet));
-
-
-                desiredTheta = ((int)previousDesiredTheta + 90) % 360;
-                worldTheta = desiredTheta;
-                // See if the current world theta is greater than the desired
-                if (currentFootLoc.getWorldTheta() > desiredTheta)
-                {
-                    // Get the current world theta with the minimum delta theta removed
-                    worldTheta = currentFootLoc.getWorldTheta() - fc->getMinimumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta < desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                else if (currentFootLoc.getWorldTheta() < desiredTheta)
-                {
-                    // Get the current world theta with the maximum delta theta added
-                    worldTheta = currentFootLoc.getWorldTheta() + fc->getMaximumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta > desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                // Now let's calculate the local change
-                localTheta = worldTheta - currentFootLoc.getWorldTheta();
-                // Now lets figure out how far we can go
-                newLoc = currentFootLoc.getLocation();
-                currentMapLoc = _getMapCoord(newLoc);
-                desiredMapLoc = mapPlan[i+1];
-                if (currentMapLoc[0] > desiredMapLoc[0])
-                {
-                    // Decrease X
-                    delta[0] += fc->getMinimumDeltaX() / 5.0d;
-                }
-                else if (currentMapLoc[0] < desiredMapLoc[0])
-                {
-                    // Increase X
-                    delta[0] += fc->getMaximumDeltaX() / 5.0d;
-                }
-                if (currentMapLoc[1] > desiredMapLoc[1])
-                {
-                    // Decrease Y
-                    delta[1] += fc->getMinimumDeltaY() / 5.0d;
-                }
-                else if (currentMapLoc[1] < desiredMapLoc[1])
-                {
-                    // Increase Y
-                    delta[1] += fc->getMaximumDeltaY() / 5.0d;
-                }
-
-                // We need to move max delta x
-                newLoc += delta;//Vector2d(fc->getMaximumDeltaX() / 2.0d, fc->getMaximumDeltaY() / 2.0d);
-
-                plan.push_back(FootLocation(newLoc, worldTheta, localTheta, nextFootIndex, &_Feet));
-
-                break;
-            case 5: // Turn Right
-                cout << "Turn Right" << endl;
-                desiredTheta = ((int)previousDesiredTheta - 90 + 360) % 360;
-                //worldCoord += Vector2d((DISCRETIZATION_RES / 2.0d), (DISCRETIZATION_RES / 2.0d));
-
-                plan.push_back(FootLocation(worldCoord, desiredTheta, desiredTheta, nextFootIndex, &_Feet));
-
-
-
-                desiredTheta = ((int)previousDesiredTheta - 90 + 360) % 360;
-                worldTheta = desiredTheta;
-                // See if the current world theta is greater than the desired
-                if (currentFootLoc.getWorldTheta() > desiredTheta)
-                {
-                    // Get the current world theta with the minimum delta theta removed
-                    worldTheta = currentFootLoc.getWorldTheta() - fc->getMinimumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta < desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                else if (currentFootLoc.getWorldTheta() < desiredTheta)
-                {
-                    // Get the current world theta with the maximum delta theta added
-                    worldTheta = currentFootLoc.getWorldTheta() + fc->getMaximumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta > desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                // Now let's calculate the local change
-                localTheta = worldTheta - currentFootLoc.getWorldTheta();
-                // Now lets figure out how far we can go
-                newLoc = currentFootLoc.getLocation();
-                currentMapLoc = _getMapCoord(newLoc);
-                desiredMapLoc = mapPlan[i+1];
-                if (currentMapLoc[0] > desiredMapLoc[0])
-                {
-                    // Decrease X
-                    delta[0] += fc->getMinimumDeltaX() / 5.0d;
-                }
-                else if (currentMapLoc[0] < desiredMapLoc[0])
-                {
-                    // Increase X
-                    delta[0] += fc->getMaximumDeltaX() / 5.0d;
-                }
-                if (currentMapLoc[1] > desiredMapLoc[1])
-                {
-                    // Decrease Y
-                    delta[1] += fc->getMinimumDeltaY() / 5.0d;
-                }
-                else if (currentMapLoc[1] < desiredMapLoc[1])
-                {
-                    // Increase Y
-                    delta[1] += fc->getMaximumDeltaY() / 5.0d;
-                }
-
-                // We need to move max delta x
-                newLoc += delta;//Vector2d(fc->getMaximumDeltaX() / 2.0d, fc->getMaximumDeltaY() / 2.0d);
-
-                plan.push_back(FootLocation(newLoc, worldTheta, localTheta, nextFootIndex, &_Feet));
-                break;
-            case 0: // Continue Right
-            default:
-                cout << "Continue Right" << endl;
-                desiredTheta = 0.0f;
-                worldTheta = 0.0f;
-                // See if the current world theta is greater than the desired
-                if (currentFootLoc.getWorldTheta() > desiredTheta)
-                {
-                    // Get the current world theta with the minimum delta theta removed
-                    worldTheta = currentFootLoc.getWorldTheta() - fc->getMinimumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta < desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                else if (currentFootLoc.getWorldTheta() < desiredTheta)
-                {
-                    // Get the current world theta with the maximum delta theta added
-                    worldTheta = currentFootLoc.getWorldTheta() + fc->getMaximumDeltaTheta();
-                    // See if we passed desired
-                    if (worldTheta > desiredTheta)
-                        // Set back to desired
-                        worldTheta = desiredTheta;
-                }
-                // Now let's calculate the local change
-                localTheta = worldTheta - currentFootLoc.getWorldTheta();
-                // Now lets figure out how far we can go
-                newLoc = currentFootLoc.getLocation();
-                // We need to move max delta x
-                newLoc += Vector2d(fc->getMaximumDeltaX(), 0.0d);
-
-                plan.push_back(FootLocation(newLoc, worldTheta, localTheta, nextFootIndex, &_Feet));
-                break;
-            }
-
-            // Add a location
-            //plan.push_back(FootLocation(worldCoord, theta, theta, nextFootIndex, &_Feet));
-
-            // Save the latest foot location
-            flLatestFootLocation[nextFootIndex] = plan.back();
-            viLatestFootLocation[nextFootIndex] = _getMapCoord(flLatestFootLocation[nextFootIndex].getLocation());
-            cout << "Latest Foot Location: " << endl << flLatestFootLocation[nextFootIndex].getLocation() << endl;
-            cout << "Latest Foot Map Location: " << endl << viLatestFootLocation[nextFootIndex] << endl;
-            cout << "Next Map Plan Coord: " << endl << mapPlan[i+1] << endl;
-
-            // Move to the next foot
-            previousFootIndex = nextFootIndex;
-            nextFootIndex = (nextFootIndex + 1) % _Feet.size();
-        }
-        // While our newly added foot is not in the next plan tile AND
-        // while our last added foot is not in the next plan tile
-        while((viLatestFootLocation[previousFootIndex][0] != mapPlan[i+1][0] || viLatestFootLocation[previousFootIndex][1] != mapPlan[i+1][1]) &&
-              (viLatestFootLocation[nextFootIndex][0] != mapPlan[i+1][0] || viLatestFootLocation[nextFootIndex][1] != mapPlan[i+1][1]));
-        // Set the previously desired theta
-        previousDesiredTheta = desiredTheta;
-        */
     }
 
+#ifdef GO_TO_GOAL
+    // Find the path to the goal position
+    do
+    {
+        // Get the locations
+        FootLocation previousFootLoc = flLatestFootLocation[previousFootIndex];
+        FootLocation currentFootLoc = flLatestFootLocation[nextFootIndex];
+
+        // Find the corresponding constraint
+        const FootConstraint* fc;
+        for(int j = 0; j < constraints.size(); j++)
+        {
+            // Look for the constraint that corresponds to the next foot
+            // and that references the previous foot
+            if (constraints[j].getFootIndex() == nextFootIndex &&
+                constraints[j].getRefFootIndex() == previousFootIndex)
+                // Save the pointer to that constraint
+                fc = &constraints[j];
+        }
+
+        double desiredX = goalLocation[nextFootIndex].getLocation()[0];
+        double desiredY = goalLocation[nextFootIndex].getLocation()[1];
+        double desiredTheta = goalLocation[nextFootIndex].getWorldTheta();
+
+        // Save the latest foot location
+        flLatestFootLocation[nextFootIndex] = plan.back();
+        viLatestFootLocation[nextFootIndex] = _getMapCoord(flLatestFootLocation[nextFootIndex].getLocation());
+        cout << "Latest Foot Location: " << endl << flLatestFootLocation[nextFootIndex].getLocation() << endl;
+        cout << "Latest Foot Map Location: " << endl << viLatestFootLocation[nextFootIndex] << endl;
+
+        // Move to the next foot
+        previousFC = fc;
+        previousFootIndex = nextFootIndex;
+        nextFootIndex = (nextFootIndex + 1) % _Feet.size();
+    }
+    while(false);
+#endif
+
+    // Take the ending time stamp
+    clock_t tEnd = clock();
+
+    // Calculate the planning time
+    double dPlanningTime = (double)((tEnd - tStart)/CLOCKS_PER_SEC);
+    printf("Time taken: %.2fs\n", dPlanningTime);
     return plan;
 }
 

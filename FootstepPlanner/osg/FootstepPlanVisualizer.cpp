@@ -46,10 +46,10 @@
 
 //#define START_TILE
 //#define GOAL_TILE
-//#define MAP_TILES
-//#define OBSTACLE_TILES
+#define MAP_TILES
+#define OBSTACLE_TILES
 #define MAP_GRID
-//#define MAP_LINES
+#define MAP_LINES
 #define OBSTACLES
 #define FOOTSTEPS
 #define GOAL_LOCATION
